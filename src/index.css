@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-heading: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-sport: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #070b12;
+    color: #f1f5f9;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-racing, .font-sport {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* Scrollbar Racing */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #070b12;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00A8FF;
+}
+
+/* Gradients del Logo SOZA (Azul Eléctrico + Rojo Racing) */
+.soza-gradient-text {
+  background: linear-gradient(135deg, #00F0FF 0%, #0088FF 50%, #FF2A2A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.soza-blue-gradient-text {
+  background: linear-gradient(135deg, #E0F2FE 0%, #38BDF8 50%, #0284C7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.soza-red-gradient-text {
+  background: linear-gradient(135deg, #FFAAA5 0%, #FF2A2A 50%, #B91C1C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.soza-btn-primary {
+  background: linear-gradient(135deg, #0070F3 0%, #0051C7 50%, #FF2A2A 100%);
+  box-shadow: 0 0 20px -5px rgba(0, 112, 243, 0.5);
+}
+
+.soza-btn-primary:hover {
+  background: linear-gradient(135deg, #0088FF 0%, #0060E6 50%, #FF4444 100%);
+  box-shadow: 0 0 25px -3px rgba(0, 136, 255, 0.6);
+}
+
+.soza-card-glow {
+  box-shadow: 0 0 25px -5px rgba(0, 168, 255, 0.15);
+}
+
+.soza-card-glow:hover {
+  box-shadow: 0 0 30px -3px rgba(0, 168, 255, 0.3), 0 0 20px -5px rgba(255, 42, 42, 0.2);
+  border-color: rgba(0, 168, 255, 0.4);
+}
+
+.racing-glow-red {
+  box-shadow: 0 0 20px -3px rgba(255, 42, 42, 0.4);
+}
+
+.racing-glow-blue {
+  box-shadow: 0 0 20px -3px rgba(0, 168, 255, 0.4);
+}
