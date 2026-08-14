@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import Badge from '../../../shared/components/Badge';
 import Button from '../../../shared/components/Button';
+import Modal from '../../../shared/components/Modal';
 import { getOrders, getAdminOrders } from '../../../shared/services/dataService';
 import { exportOrdersToExcel } from '../../../shared/services/excelService';
 import { useToast } from '../../../shared/context/ToastContext';
@@ -14,6 +15,10 @@ export default function QueryOrdersPage() {
   const [adminOrders, setAdminOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // State para modal "Ver más detalles"
+  const [detailsModalItems, setDetailsModalItems] = useState(null);
+  const [detailsModalTitle, setDetailsModalTitle] = useState('');
 
   useEffect(() => {
     loadAllOrders();
@@ -152,7 +157,7 @@ export default function QueryOrdersPage() {
                   <th className="p-4">N° Pedido</th>
                   <th className="p-4">Fecha</th>
                   <th className="p-4">Cliente</th>
-                  <th className="p-4">Asesor</th>
+                  <th className="p-4">Vendedor</th>
                   <th className="p-4">Repuestos / Cantidades</th>
                   <th className="p-4">Estado</th>
                   <th className="p-4 text-right">Total (C$)</th>
@@ -182,20 +187,31 @@ export default function QueryOrdersPage() {
                       </td>
                       <td className="p-4 max-w-xs">
                         <div className="space-y-0.5">
-                          {order.items && order.items.map((it, idx) => (
+                          {order.items && order.items.slice(0, 5).map((it, idx) => (
                             <div key={idx} className="truncate text-[11px] text-slate-300">
                               <span className="font-bold text-cyan-400 font-mono">
                                 {it.adjusted_quantity || it.quantity || 1}x
                               </span> {it.product_name || it.name}
                             </div>
                           ))}
+                          {order.items && order.items.length > 5 && (
+                            <button
+                              onClick={() => {
+                                setDetailsModalTitle(`Pedido ${order.order_number}`);
+                                setDetailsModalItems(order.items);
+                              }}
+                              className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold mt-1 uppercase tracking-wider underline decoration-cyan-400/50 underline-offset-2 transition-all cursor-pointer"
+                            >
+                              Ver {order.items.length - 5} más...
+                            </button>
+                          )}
                         </div>
                       </td>
                       <td className="p-4">
                         <Badge
                           variant={
                             order.status === 'facturado' || order.status === 'enviado' ? 'success' :
-                            order.status === 'cancelado' ? 'cancelled' :
+                            (order.status === 'cancelado' || order.status === 'rechazado') ? 'cancelled' :
                             order.status === 'recibido' ? 'received' : 'pending'
                           }
                           size="sm"
@@ -214,6 +230,37 @@ export default function QueryOrdersPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de Detalles de Repuestos */}
+      <Modal
+        isOpen={Boolean(detailsModalItems)}
+        onClose={() => setDetailsModalItems(null)}
+        title={detailsModalTitle}
+        subtitle="Lista completa de repuestos y cantidades solicitadas para este pedido."
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-3 font-sport max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+          {detailsModalItems && detailsModalItems.map((it, idx) => (
+            <div key={idx} className="bg-[#080d18] border border-slate-800 rounded-xl p-3 flex justify-between items-center gap-3">
+              <span className="font-bold text-slate-100 text-sm line-clamp-2 flex-1">
+                {it.product_name || it.name}
+              </span>
+              <div className="text-right shrink-0">
+                <span className="text-[10px] uppercase text-slate-500 font-bold block">Cant.</span>
+                <span className="text-sm font-black text-cyan-400 font-mono">
+                  {it.adjusted_quantity || it.quantity || 1}x
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="pt-4 border-t border-slate-800 flex justify-end mt-4">
+          <Button variant="secondary" onClick={() => setDetailsModalItems(null)}>
+            Cerrar
+          </Button>
+        </div>
+      </Modal>
+
     </div>
   );
 }

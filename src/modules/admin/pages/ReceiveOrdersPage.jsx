@@ -5,7 +5,7 @@ import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import Badge from '../../../shared/components/Badge';
 import Button from '../../../shared/components/Button';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import { getAdminOrders, updateAdminOrderStatus, softDeleteOrder } from '../../../shared/services/dataService';
+import { getAdminOrders, updateAdminOrderStatus, softDeleteOrder, getInvoices } from '../../../shared/services/dataService';
 import { useToast } from '../../../shared/context/ToastContext';
 import {
   Inbox,
@@ -19,14 +19,16 @@ import {
   Search,
   CheckCircle2,
   Wrench,
-  Trash2
+  Trash2,
+  FileText
 } from 'lucide-react';
 
 export default function ReceiveOrdersPage() {
   const { success, error, info } = useToast();
   const [adminOrders, setAdminOrders] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('todos');
+  const [statusFilter, setStatusFilter] = useState('pendiente');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Modales
@@ -42,8 +44,12 @@ export default function ReceiveOrdersPage() {
   const loadOrders = async () => {
     setLoading(true);
     try {
-      const data = await getAdminOrders();
+      const [data, invs] = await Promise.all([
+        getAdminOrders(),
+        getInvoices()
+      ]);
       setAdminOrders(data || []);
+      setInvoices(invs || []);
     } catch (e) {
       error('Error al cargar pedidos del admin: ' + e.message);
     } finally {
@@ -70,8 +76,8 @@ export default function ReceiveOrdersPage() {
   const handleCancelOrder = async () => {
     if (!cancelingOrderId) return;
     try {
-      await updateAdminOrderStatus(cancelingOrderId, 'cancelado');
-      info('Pedido de repuestos cancelado.');
+      await updateAdminOrderStatus(cancelingOrderId, 'rechazado');
+      info('Pedido de repuestos rechazado.');
       setCancelingOrderId(null);
       loadOrders();
     } catch (e) {
@@ -102,7 +108,7 @@ export default function ReceiveOrdersPage() {
 
   const countPending = adminOrders.filter(o => o.status === 'pendiente').length;
   const countInvoiced = adminOrders.filter(o => o.status === 'facturado').length;
-  const countCancelled = adminOrders.filter(o => o.status === 'cancelado').length;
+  const countCancelled = adminOrders.filter(o => o.status === 'rechazado').length;
 
   return (
     <div className="space-y-8">
@@ -112,7 +118,7 @@ export default function ReceiveOrdersPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold font-racing text-slate-100 flex items-center gap-2.5">
             <Inbox className="w-7 h-7 text-cyan-400" />
-            Recibir Pedidos de Vendedores (Despacho Central)
+            Recibir Pedidos de Vendedores 
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 font-sport">
             Órdenes de repuestos y accesorios transferidas. Ajusta cantidades por stock en tienda, cancela o factura con emisión de PDF.
@@ -165,16 +171,16 @@ export default function ReceiveOrdersPage() {
         </button>
 
         <button
-          onClick={() => setStatusFilter('cancelado')}
+          onClick={() => setStatusFilter('rechazado')}
           className={`p-4 rounded-2xl border text-left transition-all cursor-pointer
-            ${statusFilter === 'cancelado'
+            ${statusFilter === 'rechazado'
               ? 'bg-red-950/40 border-red-500/50 shadow-lg shadow-red-900/20'
               : 'bg-[#0d1424]/70 border-slate-800 hover:border-slate-700'
             }
           `}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-red-400 uppercase tracking-wider">Cancelados</span>
+            <span className="text-xs font-bold text-red-400 uppercase tracking-wider">Rechazado</span>
             <XCircle className="w-4 h-4 text-red-400" />
           </div>
           <p className="text-2xl font-black text-slate-100 mt-2 font-mono">{countCancelled}</p>
@@ -196,7 +202,7 @@ export default function ReceiveOrdersPage() {
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
-          {['todos', 'pendiente', 'facturado', 'cancelado'].map((tab) => (
+          {['todos', 'pendiente', 'facturado', 'rechazado'].map((tab) => (
             <button
               key={tab}
               onClick={() => setStatusFilter(tab)}
@@ -207,7 +213,7 @@ export default function ReceiveOrdersPage() {
                 }
               `}
             >
-              {tab === 'todos' ? 'Todos' : tab === 'pendiente' ? 'Pendientes' : tab === 'facturado' ? 'Facturados' : 'Cancelados'}
+              {tab === 'todos' ? 'Todos' : tab === 'pendiente' ? 'Pendientes' : tab === 'facturado' ? 'Facturados' : 'Rechazados'}
             </button>
           ))}
         </div>
@@ -229,7 +235,7 @@ export default function ReceiveOrdersPage() {
           {filteredOrders.map((order) => {
             const isPending = order.status === 'pendiente';
             const isInvoiced = order.status === 'facturado';
-            const isCancelled = order.status === 'cancelado';
+            const isCancelled = order.status === 'rechazado';
 
             return (
               <div
@@ -310,27 +316,6 @@ export default function ReceiveOrdersPage() {
                   {isPending && (
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
-                        variant="secondary"
-                        size="sm"
-                        icon={Edit3}
-                        onClick={() => setEditingOrder(order)}
-                        title="Ajustar cantidades si falta stock"
-                        className="font-sport uppercase tracking-wider"
-                      >
-                        Ajustar Stock
-                      </Button>
-
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        icon={XCircle}
-                        onClick={() => setCancelingOrderId(order.id)}
-                        className="font-sport uppercase tracking-wider"
-                      >
-                        Cancelar
-                      </Button>
-
-                      <Button
                         variant="soza"
                         size="sm"
                         icon={FileCheck2}
@@ -339,14 +324,42 @@ export default function ReceiveOrdersPage() {
                       >
                         Facturar Pedido
                       </Button>
+                      
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        icon={XCircle}
+                        onClick={() => setCancelingOrderId(order.id)}
+                        className="font-sport uppercase tracking-wider"
+                      >
+                        Rechazado
+                      </Button>
+
+                      
                     </div>
                   )}
 
                   {isInvoiced && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
                       <span className="text-xs text-emerald-400 font-bold flex items-center gap-1 bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-500/30 font-sport">
                         <CheckCircle2 className="w-4 h-4" /> Facturado
                       </span>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          const inv = invoices.find(i => i.admin_order_id === order.id);
+                          if (inv) {
+                            setGeneratedInvoice(inv);
+                          } else {
+                            error('No se pudo localizar la factura PDF de este pedido.');
+                          }
+                        }}
+                        className="font-sport text-xs flex items-center gap-2"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        Ver Factura
+                      </Button>
                     </div>
                   )}
 
