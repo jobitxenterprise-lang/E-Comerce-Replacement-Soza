@@ -110,7 +110,7 @@ export default function CatalogPage({ onOpenSellerLogin }) {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mt-3 text-sm sm:text-base text-slate-300 max-w-2xl mx-auto font-sport font-medium leading-relaxed"
           >
-            Llantas TRX, Cascos X-SPORS, Baterías, Repuestos de Motor EVERESTT y Accesorios KIGCOL. Haz tu pedido y coordina con nuestros asesores de ventas.
+            Llantas TRX, Cascos X-SPORS, Baterías, Repuestos de Motor EVERESTT y Accesorios KIGCOL. Haz tu pedido y coordina con nuestros vendedores.
           </motion.p>
 
           {/* Marcas Patrocinadas 

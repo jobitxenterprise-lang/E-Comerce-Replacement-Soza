@@ -850,6 +850,8 @@ export async function updateAdminOrderStatus(adminOrderId, newStatus) {
 // ==========================================
 export async function getInvoices() {
   const local = getLocal(LOCAL_STORAGE_KEYS.INVOICES) || [];
+  let combined = [...local];
+
   if (isSupabaseConfigured) {
     try {
       const { data, error } = await supabase
@@ -857,21 +859,58 @@ export async function getInvoices() {
         .select('*')
         .order('created_at', { ascending: false });
       if (!error && data) {
-        // Combinar facturas de supabase con las locales (por si alguna falló en subir)
-        const combined = [...data];
+        combined = [...data];
         local.forEach(lInv => {
           if (!combined.find(c => c.id === lInv.id)) {
             combined.push(lInv);
           }
         });
-        setLocal(LOCAL_STORAGE_KEYS.INVOICES, combined);
-        return combined;
       }
     } catch (e) {
       console.warn('Fallback a facturas locales:', e);
     }
   }
-  return local;
+
+  // Reconciliación automática con admin_orders facturados
+  try {
+    const adminOrders = await getAdminOrders();
+    const facturados = (adminOrders || []).filter(o => o.status === 'facturado');
+    const sellers = await getSellers();
+
+    facturados.forEach(order => {
+      const alreadyInInvoices = combined.find(
+        inv => inv.admin_order_id === order.id || inv.order_number === order.order_number
+      );
+
+      if (!alreadyInInvoices) {
+        const seller = (sellers || []).find(s => s.id === order.seller_id || s.name === order.seller_name);
+        const sellerNameWithZone = seller 
+          ? (seller.zone ? `${seller.name} (${seller.zone})` : seller.name)
+          : (order.seller_name || 'Venta Directa');
+
+        const fallbackInvoice = {
+          id: 'inv-sync-' + order.id,
+          invoice_number: `FAC-SOZA-${order.order_number.replace('SZ-MOTO-', '')}`,
+          admin_order_id: order.id,
+          order_number: order.order_number,
+          client_name: order.client_name,
+          seller_name: sellerNameWithZone,
+          invoice_date: order.reception_date || order.created_at || new Date().toISOString(),
+          total_amount: Number(order.adjusted_total || order.total || 0),
+          items_snapshot: order.items || [],
+          company_snapshot: { company_name: 'Repuestos SOZA', phone: '+505 8944-3594' },
+          created_at: order.created_at || new Date().toISOString()
+        };
+
+        combined.push(fallbackInvoice);
+      }
+    });
+  } catch (err) {
+    console.warn('Error en auto-reconciliación de facturas:', err);
+  }
+
+  setLocal(LOCAL_STORAGE_KEYS.INVOICES, combined);
+  return combined;
 }
 
 // ==========================================

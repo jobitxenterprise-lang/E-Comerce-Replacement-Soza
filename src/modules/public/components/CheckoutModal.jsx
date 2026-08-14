@@ -65,12 +65,12 @@ export default function CheckoutModal({ isOpen, onClose, defaultSellerId = '', i
       const selectedSeller = sellers.find(s => s.id === values.seller_id);
       setOrderCompleted({
         ...order,
-        sellerName: selectedSeller ? selectedSeller.name : 'Asesor de Ventas'
+        sellerName: selectedSeller ? (selectedSeller.zone ? `${selectedSeller.name} (${selectedSeller.zone})` : selectedSeller.name) : 'Vendedor'
       });
 
       clearCart();
       resetForm();
-      success(`¡Pedido ${order.order_number} enviado al asesor!`);
+      success(`¡Pedido ${order.order_number} enviado al vendedor!`);
     } catch (err) {
       error('Error al procesar el pedido: ' + err.message);
     } finally {
@@ -83,7 +83,7 @@ export default function CheckoutModal({ isOpen, onClose, defaultSellerId = '', i
       isOpen={isOpen}
       onClose={onClose}
       title={orderCompleted ? '¡Pedido Enviado!' : 'Enviar Pedido '}
-      subtitle={orderCompleted ? 'Tu pedido ha sido enviada ' : ''}
+      subtitle={orderCompleted ? 'Tu pedido ha sido enviado ' : ''}
       maxWidth="max-w-xl"
     >
       {orderCompleted ? (
@@ -106,7 +106,7 @@ export default function CheckoutModal({ isOpen, onClose, defaultSellerId = '', i
               <span className="font-bold text-slate-100">{orderCompleted.client_name}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-800">
-              <span className="text-slate-400">Asesor de Ventas:</span>
+              <span className="text-slate-400">Vendedor:</span>
               <span className="font-bold text-cyan-400">{orderCompleted.sellerName}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-800">
@@ -120,7 +120,7 @@ export default function CheckoutModal({ isOpen, onClose, defaultSellerId = '', i
           </div>
 
           <p className="text-xs text-slate-400 max-w-sm mb-6 leading-relaxed">
-            Tu asesor en Matagalpa revisará la disponibilidad de los repuestos y se comunicará para el pago y entrega.
+            Tu vendedor en Matagalpa revisará la disponibilidad de los repuestos y se comunicará para el pago y entrega.
           </p>
 
           <Button variant="soza" size="lg" className="w-full uppercase tracking-wider font-bold" onClick={onClose}>
@@ -178,7 +178,7 @@ export default function CheckoutModal({ isOpen, onClose, defaultSellerId = '', i
 
               {/* INPUT 2: Seleccionar Vendedor */}
               <Select
-                label="Asesor de Ventas Asignado"
+                label="Vendedor Asignado"
                 name="seller_id"
                 required
                 options={sellerOptions}
@@ -188,7 +188,7 @@ export default function CheckoutModal({ isOpen, onClose, defaultSellerId = '', i
                 onBlur={handleBlur}
                 error={errors.seller_id}
                 touched={touched.seller_id}
-                helperText={isSellerMode ? 'Bloqueado: Se registrará a tu nombre como vendedor.' : 'Elige el asesor que te brindará atención personalizada en Matagalpa.'}
+                helperText={isSellerMode ? 'Bloqueado: Se registrará a tu nombre como vendedor.' : 'Elige el vendedor que te brindará atención personalizada en Matagalpa.'}
               />
 
               {/* Botones de Cancelar y Enviar Pedido */}

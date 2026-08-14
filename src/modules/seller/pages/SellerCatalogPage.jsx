@@ -82,10 +82,15 @@ export default function SellerCatalogPage() {
       {/* Banner Vendedor */}
       <div className="bg-[#0b1528] border-b border-cyan-500/30 py-3 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between text-xs sm:text-sm font-sport">
-          <div className="flex items-center gap-2 text-cyan-300 font-bold">
+          <div className="flex items-center gap-2 text-cyan-300 font-bold flex-wrap">
             <UserCheck className="w-4 h-4 text-cyan-400" />
-            <span>MODO VENTA MOSTRADOR / ASESOR:</span>
+            <span>MODO VENTA MOSTRADOR / VENDEDOR:</span>
             <span className="text-white font-black">{currentSeller?.name}</span>
+            {currentSeller?.zone && (
+              <span className="text-slate-400 font-normal text-xs bg-slate-800 px-2 py-0.5 rounded border border-slate-700/60">
+                ({currentSeller.zone})
+              </span>
+            )}
           </div>
           <span className="text-slate-400 text-xs hidden sm:inline">
             Tus pedidos levantados se registrarán bajo tu código de vendedor

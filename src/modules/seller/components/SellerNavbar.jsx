@@ -36,7 +36,7 @@ export default function SellerNavbar() {
               <div>
                 
                 <span className="block text-[10px] text-cyan-400 font-semibold uppercase font-sport">
-                  Vendedor: {currentSeller?.name}
+                  Vendedor: {currentSeller?.name} {currentSeller?.zone ? `(${currentSeller.zone})` : ''}
                 </span>
               </div>
             
