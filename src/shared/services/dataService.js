@@ -131,7 +131,7 @@ export async function getProducts() {
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         setLocal(LOCAL_STORAGE_KEYS.PRODUCTS, data);
         return data;
       }
@@ -210,7 +210,7 @@ export async function decreaseProductStock(productId, qty) {
 }
 
 // ==========================================
-// 3. VENDEDORES
+// 3. VENDEDORES & AUTENTICACIÓN (SUPABASE AUTH + TABLA)
 // ==========================================
 export async function getSellers() {
   if (isSupabaseConfigured) {
@@ -232,13 +232,36 @@ export async function getSellerById(id) {
   return sellers.find(s => s.id === id) || null;
 }
 
-export async function authenticateSeller(username, password) {
+export async function authenticateSeller(usernameOrEmail, password) {
   if (isSupabaseConfigured) {
     try {
+      // 1. Intentar con Supabase Auth (JWT)
+      const email = usernameOrEmail.includes('@') ? usernameOrEmail.trim() : `${usernameOrEmail.trim()}@repuestosoza.com`;
+      const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password.trim()
+      });
+
+      if (!authErr && authData?.user) {
+        const metadata = authData.user.user_metadata || {};
+        return {
+          success: true,
+          seller: {
+            id: authData.user.id,
+            email: authData.user.email,
+            name: metadata.name || usernameOrEmail,
+            username: metadata.username || usernameOrEmail,
+            zone: metadata.zone || 'Zona Centro - Norte',
+            role: 'seller'
+          }
+        };
+      }
+
+      // 2. Si falla Auth, consultar en tabla sellers
       const { data, error } = await supabase
         .from('sellers')
         .select('*')
-        .ilike('username', username.trim())
+        .ilike('username', usernameOrEmail.trim())
         .eq('password', password.trim())
         .eq('active', true)
         .single();
@@ -252,7 +275,7 @@ export async function authenticateSeller(username, password) {
 
   const sellers = getLocal(LOCAL_STORAGE_KEYS.SELLERS);
   const seller = sellers.find(
-    s => (s.username.toLowerCase() === username.trim().toLowerCase()) && 
+    s => (s.username.toLowerCase() === usernameOrEmail.trim().toLowerCase()) && 
          (s.password === password.trim()) && 
          s.active !== false
   );
@@ -263,26 +286,37 @@ export async function authenticateSeller(username, password) {
 }
 
 // ==========================================
-// 4. ADMINISTRADOR
+// 4. ADMINISTRADOR & AUTENTICACIÓN (SUPABASE AUTH + FALLBACK)
 // ==========================================
 export async function authenticateAdmin(usernameOrEmail, password) {
   if (isSupabaseConfigured) {
     try {
-      const query = usernameOrEmail.trim();
-      const { data, error } = await supabase
-        .from('admins')
-        .select('*')
-        .or(`username.ilike.${query},email.ilike.${query}`)
-        .eq('password', password.trim())
-        .single();
-      if (!error && data) {
-        return { success: true, admin: data };
+      // 1. Intentar con Supabase Auth (JWT)
+      const email = usernameOrEmail.includes('@') ? usernameOrEmail.trim() : `${usernameOrEmail.trim()}@repuestosoza.com`;
+      const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password.trim()
+      });
+
+      if (!authErr && authData?.user) {
+        const metadata = authData.user.user_metadata || {};
+        return {
+          success: true,
+          admin: {
+            id: authData.user.id,
+            email: authData.user.email,
+            name: metadata.name || 'Administrador General',
+            username: metadata.username || 'admin',
+            role: metadata.role || 'admin'
+          }
+        };
       }
     } catch (e) {
-      console.warn('Error auth Supabase admin, probando local:', e);
+      console.warn('Error en Supabase Auth Admin, probando fallback:', e);
     }
   }
 
+  // Fallback con credenciales predeterminadas o locales
   const admins = getLocal(LOCAL_STORAGE_KEYS.ADMINS);
   const query = usernameOrEmail.trim().toLowerCase();
   const admin = admins.find(
