@@ -5,28 +5,38 @@ import Input from '../../../shared/components/Input';
 import Select from '../../../shared/components/Select';
 import Button from '../../../shared/components/Button';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
-import { getProducts, addProduct, updateProduct } from '../../../shared/services/dataService';
-import { productCategories } from '../../../data/seedData';
+import { getProducts, addProduct, updateProduct, getCategories } from '../../../shared/services/dataService';
+import { productCategories as defaultCategories } from '../../../data/seedData';
 import { useToast } from '../../../shared/context/ToastContext';
 import { PlusCircle, Edit, Zap, Image, Package, DollarSign, Wrench, X } from 'lucide-react';
 
 export default function AddProductPage() {
   const { success, error } = useToast();
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
 
   useEffect(() => {
-    loadProducts();
+    loadData();
   }, []);
 
-  const loadProducts = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const data = await getProducts();
-      setProducts(data || []);
+      const [prodsData, catsData] = await Promise.all([
+        getProducts(),
+        getCategories()
+      ]);
+      setProducts(prodsData || []);
+      if (catsData && catsData.length > 0) {
+        setCategories(catsData.map(c => c.name || c));
+      } else {
+        setCategories(defaultCategories.filter(c => c !== 'Todos'));
+      }
     } catch (e) {
-      error('Error al cargar productos: ' + e.message);
+      error('Error al cargar datos: ' + e.message);
+      setCategories(defaultCategories.filter(c => c !== 'Todos'));
     } finally {
       setLoading(false);
     }
@@ -35,7 +45,7 @@ export default function AddProductPage() {
   const initialValues = editingProduct
     ? {
         name: editingProduct.name || '',
-        category: editingProduct.category || 'Llantas & Neumáticos',
+        category: editingProduct.category || 'Motor',
         price: editingProduct.price || '',
         cost_price: editingProduct.cost_price || '',
         stock: editingProduct.stock !== undefined ? editingProduct.stock : '',
@@ -45,7 +55,7 @@ export default function AddProductPage() {
       }
     : {
         name: '',
-        category: 'Llantas & Neumáticos',
+        category: 'Motor',
         price: '',
         cost_price: '',
         stock: 10,
@@ -83,7 +93,7 @@ export default function AddProductPage() {
     }
   };
 
-  const categoryOptions = productCategories
+  const categoryOptions = categories
     .filter(c => c !== 'Todos')
     .map(c => ({ value: c, label: c }));
 

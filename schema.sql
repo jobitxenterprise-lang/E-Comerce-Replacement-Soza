@@ -1,9 +1,9 @@
 -- ==============================================================================
 -- SCHEMA SQL COMPLETO: REPUESTOS SOZA — MATAGALPA, NICARAGUA
 -- Compatible con Supabase PostgreSQL
--- Incluye: Categorías, Repuestos de Motos, Vendedores, Administradores, Pedidos (Vendedor/Público),
---          Pedidos Admin (Edición de cantidades), Detalle, Facturas, Configuración,
---          Funciones RPC, Políticas RLS y Datos Semilla Oficiales.
+-- Incluye: 5 Categorías Oficiales, Repuestos de Motos, Vendedores, Administradores,
+--          Pedidos (Vendedor/Público), Pedidos Admin (Edición cantidades), Detalle,
+--          Facturas, Configuración, Funciones RPC, RLS y Datos Semilla Oficiales.
 -- ==============================================================================
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   name TEXT NOT NULL,
   description TEXT,
-  category TEXT NOT NULL DEFAULT 'Llantas & Neumáticos',
+  category TEXT NOT NULL DEFAULT 'Motor',
   price NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   cost_price NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   stock INT NOT NULL DEFAULT 0,
@@ -218,17 +218,14 @@ VALUES (
   }'::jsonb
 ) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
--- CATEGORÍAS OFICIALES DE MOTOCICLETAS
+-- LAS 5 CATEGORÍAS OFICIALES
 INSERT INTO public.categories (id, name, description, active)
 VALUES
-  ('cat-0001', 'Llantas & Neumáticos', 'Llantas deportivas, todo terreno, cámaras y neumáticos para motos', true),
-  ('cat-0002', 'Cascos & Protección', 'Cascos certificados DOT/ECE, guantes, chaquetas y rodilleras', true),
-  ('cat-0003', 'Baterías & Eléctrico', 'Baterías de gel selladas, bombillos LED, ramales y reguladores', true),
-  ('cat-0004', 'Repuestos de Motor & OEM', 'Pistones, cilindros, anillos, válvulas, carburadores y juntas', true),
-  ('cat-0005', 'Kit de Arrastre & Cadenas', 'Catalinas, piñones, cadenas reforzadas y tensores', true),
-  ('cat-0006', 'Frenos & Suspensión', 'Pastillas, zapatas, discos de freno, barras y amortiguadores', true),
-  ('cat-0007', 'Aceites & Lubricantes', 'Aceites 4T sintéticos, semi-sintéticos, lubricantes de cadena y aditivos', true),
-  ('cat-0008', 'Accesorios & Tuning', 'Retrovisores, manubrios, sliders, escapes y luces exploradoras', true)
+  ('cat-0001', 'Motor', 'Pistones, cilindros, anillos, válvulas, carburadores, empaquetaduras y aceites 4T', true),
+  ('cat-0002', 'Transmisión y Clutch', 'Catalinas, piñones, cadenas de arrastre, discos de embrague y platos', true),
+  ('cat-0003', 'Frenos y Suspensión', 'Pastillas, zapatas, discos de freno, amortiguadores y llantas de alta tracción', true),
+  ('cat-0004', 'Eléctrico', 'Baterías de gel selladas, bombillos LED de alta potencia, ramales y reguladores', true),
+  ('cat-0005', 'Carrocería y Accesorios', 'Cascos certificados, retrovisores, manubrios, sliders y accesorios de protección', true)
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO public.admins (id, username, password, email, name)
@@ -252,42 +249,9 @@ INSERT INTO public.products (id, name, description, category, price, cost_price,
 VALUES
   (
     'prod-0001',
-    'Llanta Deportiva TRX Tires 130/70-17 TL',
-    'Llanta para moto deportiva con compuesto de alta tracción y agarre superior en curvas tanto en asfalto seco como mojado. Marca TRX Tires original.',
-    'Llantas & Neumáticos',
-    68.00,
-    44.00,
-    24,
-    'https://images.unsplash.com/photo-1578844251758-2f71da64c96f?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0002',
-    'Casco Integral X-SPORS Carbon Racing Pro',
-    'Casco con certificación DOT y ECE 22.06, visor antirrayaduras con preparación Pinlock, ventilación aerodinámica de alto flujo y diseño rojo/negro deportivo.',
-    'Cascos & Protección',
-    115.00,
-    78.00,
-    15,
-    'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0003',
-    'Batería de Gel TRX Power 12V 9Ah Sellada',
-    'Batería de gel libre de mantenimiento con alta potencia de arranque en frío (CCA), resistencia extrema a vibraciones y tecnología TRX Energy & Traction.',
-    'Baterías & Eléctrico',
-    42.00,
-    26.00,
-    30,
-    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0004',
     'Kit de Cilindro y Pistón EVERESTT Motor Tech 150cc OEM',
     'Kit completo de reparación de motor con cilindro rectificado de alta resistencia térmica, pistón reforzado, aros japoneses y empaquetadura completa.',
-    'Repuestos de Motor & OEM',
+    'Motor',
     58.00,
     36.00,
     18,
@@ -295,21 +259,10 @@ VALUES
     true
   ),
   (
-    'prod-0005',
-    'Kit de Arrastre Reforzado KIGCOL 428H (Catalina + Piñón + Cadena)',
-    'Kit de tracción con tratamiento térmico endurecido para máxima durabilidad, piñón y catalina de acero al carbono 1045 con cadena dorada de alta resistencia.',
-    'Kit de Arrastre & Cadenas',
-    34.00,
-    21.00,
-    25,
-    'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0006',
+    'prod-0002',
     'Carburador Racing KIGCOL PE28 con Cortina Plana',
     'Carburador de alto desempeño para motos 150cc a 250cc. Respuesta instantánea al acelerador, fácil calibración y óptimo flujo de mezcla combustible.',
-    'Repuestos de Motor & OEM',
+    'Motor',
     46.00,
     29.00,
     14,
@@ -317,10 +270,32 @@ VALUES
     true
   ),
   (
-    'prod-0007',
+    'prod-0003',
+    'Kit de Arrastre Reforzado KIGCOL 428H (Catalina + Piñón + Cadena)',
+    'Kit de tracción con tratamiento térmico endurecido para máxima durabilidad, piñón y catalina de acero al carbono 1045 con cadena dorada de alta resistencia.',
+    'Transmisión y Clutch',
+    34.00,
+    21.00,
+    25,
+    'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600&auto=format&fit=crop&q=80',
+    true
+  ),
+  (
+    'prod-0004',
+    'Pastillas de Freno Cerámicas EVERESTT Racing Delanteras',
+    'Juego de pastillas de compuesto sinterizado cerámico con disipación térmica rápida, frenado firme sin ruidos y mínimo desgaste del disco.',
+    'Frenos y Suspensión',
+    12.00,
+    6.50,
+    35,
+    'https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?w=600&auto=format&fit=crop&q=80',
+    true
+  ),
+  (
+    'prod-0005',
     'Juego de Amortiguadores Traseros Hidráulicos KIGCOL Pro Gas',
     'Par de amortiguadores reforzados con precarga de resorte regulable y botella de nitrógeno para absorción suave en caminos difíciles y carga pesada.',
-    'Frenos & Suspensión',
+    'Frenos y Suspensión',
     52.00,
     33.00,
     12,
@@ -328,10 +303,32 @@ VALUES
     true
   ),
   (
+    'prod-0006',
+    'Llanta Deportiva TRX Tires 130/70-17 TL',
+    'Llanta para moto deportiva con compuesto de alta tracción y agarre superior en curvas tanto en asfalto seco como mojado. Marca TRX Tires original.',
+    'Frenos y Suspensión',
+    68.00,
+    44.00,
+    24,
+    'https://images.unsplash.com/photo-1578844251758-2f71da64c96f?w=600&auto=format&fit=crop&q=80',
+    true
+  ),
+  (
+    'prod-0007',
+    'Batería de Gel TRX Power 12V 9Ah Sellada',
+    'Batería de gel libre de mantenimiento con alta potencia de arranque en frío (CCA), resistencia extrema a vibraciones y tecnología TRX Energy & Traction.',
+    'Eléctrico',
+    42.00,
+    26.00,
+    30,
+    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&auto=format&fit=crop&q=80',
+    true
+  ),
+  (
     'prod-0008',
     'Foco Farola Delantera LED Cree H4 12V 8000LM Alta Potencia',
     'Bombillo LED con lupa bifocal y disipador de aluminio aeronáutico. Luz blanca fría ultrabrillante y corte de luz antideslumbrante para conducción nocturna segura.',
-    'Baterías & Eléctrico',
+    'Eléctrico',
     18.00,
     9.50,
     40,
@@ -340,24 +337,24 @@ VALUES
   ),
   (
     'prod-0009',
-    'Aceite Sintético Motul 7100 4T 10W-40 1 Litro',
-    'Lubricante 100% sintético con tecnología Éster para motores de 4 tiempos de alto rendimiento. Protección extrema a altas revoluciones y cambios suaves.',
-    'Aceites & Lubricantes',
-    19.50,
-    13.00,
-    50,
-    'https://images.unsplash.com/photo-1635773054018-22c7a36c53ce?w=600&auto=format&fit=crop&q=80',
+    'Casco Integral X-SPORS Carbon Racing Pro',
+    'Casco con certificación DOT y ECE 22.06, visor antirrayaduras con preparación Pinlock, ventilación aerodinámica de alto flujo y diseño rojo/negro deportivo.',
+    'Carrocería y Accesorios',
+    115.00,
+    78.00,
+    15,
+    'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=600&auto=format&fit=crop&q=80',
     true
   ),
   (
     'prod-0010',
-    'Pastillas de Freno Cerámicas EVERESTT Racing Delanteras',
-    'Juego de pastillas de compuesto sinterizado cerámico con disipación térmica rápida, frenado firme sin ruidos y mínimo desgaste del disco.',
-    'Frenos & Suspensión',
-    12.00,
-    6.50,
-    35,
-    'https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?w=600&auto=format&fit=crop&q=80',
+    'Aceite Sintético Motul 7100 4T 10W-40 1 Litro',
+    'Lubricante 100% sintético con tecnología Éster para motores de 4 tiempos de alto rendimiento. Protección extrema a altas revoluciones y cambios suaves.',
+    'Motor',
+    19.50,
+    13.00,
+    50,
+    'https://images.unsplash.com/photo-1635773054018-22c7a36c53ce?w=600&auto=format&fit=crop&q=80',
     true
   )
 ON CONFLICT (id) DO NOTHING;
