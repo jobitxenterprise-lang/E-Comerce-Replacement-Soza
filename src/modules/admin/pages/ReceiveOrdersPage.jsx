@@ -5,7 +5,7 @@ import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import Badge from '../../../shared/components/Badge';
 import Button from '../../../shared/components/Button';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import { getAdminOrders, updateAdminOrderStatus, softDeleteOrder, getInvoices } from '../../../shared/services/dataService';
+import { getAdminOrders, updateAdminOrderStatus, softDeleteOrder, getInvoices, getSellers } from '../../../shared/services/dataService';
 import { useToast } from '../../../shared/context/ToastContext';
 import {
   Inbox,
@@ -27,6 +27,7 @@ export default function ReceiveOrdersPage() {
   const { success, error, info } = useToast();
   const [adminOrders, setAdminOrders] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('pendiente');
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,12 +45,14 @@ export default function ReceiveOrdersPage() {
   const loadOrders = async () => {
     setLoading(true);
     try {
-      const [data, invs] = await Promise.all([
+      const [data, invs, sellersData] = await Promise.all([
         getAdminOrders(),
-        getInvoices()
+        getInvoices(),
+        getSellers()
       ]);
       setAdminOrders(data || []);
       setInvoices(invs || []);
+      setSellers(sellersData || []);
     } catch (e) {
       error('Error al cargar pedidos del admin: ' + e.message);
     } finally {
@@ -269,9 +272,20 @@ export default function ReceiveOrdersPage() {
                       <User className="w-3.5 h-3.5 text-slate-400" />
                       <span>Cliente: <strong>{order.client_name}</strong></span>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-slate-400">Vendedor:</span>
                       <strong className="text-cyan-400">{order.seller_name}</strong>
+                      {(() => {
+                        const seller = sellers.find(s => 
+                          s.name?.toLowerCase().trim() === order.seller_name?.toLowerCase().trim() ||
+                          s.id === order.seller_id
+                        );
+                        return seller?.zone ? (
+                          <span className="text-[10px] text-slate-400 font-normal bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700/60">
+                            {seller.zone}
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-slate-500" />

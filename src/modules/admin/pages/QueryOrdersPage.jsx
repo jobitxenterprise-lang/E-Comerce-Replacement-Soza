@@ -3,7 +3,7 @@ import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import Badge from '../../../shared/components/Badge';
 import Button from '../../../shared/components/Button';
 import Modal from '../../../shared/components/Modal';
-import { getOrders, getAdminOrders } from '../../../shared/services/dataService';
+import { getOrders, getAdminOrders, getSellers } from '../../../shared/services/dataService';
 import { exportOrdersToExcel } from '../../../shared/services/excelService';
 import { useToast } from '../../../shared/context/ToastContext';
 import { Search, Download, RefreshCw, ShoppingCart, ShieldCheck, Wrench } from 'lucide-react';
@@ -13,6 +13,7 @@ export default function QueryOrdersPage() {
   const [activeTab, setActiveTab] = useState('vendedor'); // 'vendedor' | 'admin'
   const [sellerOrders, setSellerOrders] = useState([]);
   const [adminOrders, setAdminOrders] = useState([]);
+  const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -27,12 +28,14 @@ export default function QueryOrdersPage() {
   const loadAllOrders = async () => {
     setLoading(true);
     try {
-      const [sOrders, aOrders] = await Promise.all([
+      const [sOrders, aOrders, sellersData] = await Promise.all([
         getOrders(),
-        getAdminOrders()
+        getAdminOrders(),
+        getSellers()
       ]);
       setSellerOrders(sOrders || []);
       setAdminOrders(aOrders || []);
+      setSellers(sellersData || []);
     } catch (e) {
       error('Error al cargar pedidos: ' + e.message);
     } finally {
@@ -130,7 +133,7 @@ export default function QueryOrdersPage() {
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input
           type="text"
-          placeholder="Buscar por N° de pedido, cliente o asesor..."
+          placeholder="Buscar por N° de pedido, cliente o vendedor..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full bg-[#0d1424] border border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 font-sport"
@@ -166,6 +169,10 @@ export default function QueryOrdersPage() {
               <tbody className="divide-y divide-slate-800/60">
                 {displayedOrders.map((order) => {
                   const dateStr = order.order_date || order.reception_date || order.created_at;
+                  const seller = sellers.find(s => 
+                    s.name?.toLowerCase().trim() === order.seller_name?.toLowerCase().trim() ||
+                    s.id === order.seller_id
+                  );
                   return (
                     <tr key={order.id} className="hover:bg-slate-800/40 transition-colors">
                       <td className="p-4 font-mono font-bold text-cyan-400">
@@ -182,8 +189,17 @@ export default function QueryOrdersPage() {
                       <td className="p-4 font-bold text-slate-100">
                         {order.client_name}
                       </td>
-                      <td className="p-4 text-cyan-400 font-bold">
-                        {order.seller_name || 'N/A'}
+                      <td className="p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5">
+                          <span className="text-cyan-400 font-bold whitespace-nowrap">
+                            {order.seller_name || 'N/A'}
+                          </span>
+                          {seller?.zone && (
+                            <span className="text-[10px] text-slate-400 font-normal bg-slate-800 px-2 py-0.5 rounded border border-slate-700/60 whitespace-nowrap">
+                              {seller.zone}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4 max-w-xs">
                         <div className="space-y-0.5">

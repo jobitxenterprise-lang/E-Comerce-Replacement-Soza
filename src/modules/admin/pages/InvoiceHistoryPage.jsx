@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import Button from '../../../shared/components/Button';
 import InvoiceModal from '../components/InvoiceModal';
-import { getInvoices } from '../../../shared/services/dataService';
+import { getInvoices, getSellers } from '../../../shared/services/dataService';
 import { downloadInvoicePDF } from '../../../shared/services/pdfService';
 import { useToast } from '../../../shared/context/ToastContext';
 import { FileText, Download, Eye, Search, RefreshCw, Calendar, Disc3 } from 'lucide-react';
@@ -10,19 +10,24 @@ import { FileText, Download, Eye, Search, RefreshCw, Calendar, Disc3 } from 'luc
 export default function InvoiceHistoryPage() {
   const { success, error } = useToast();
   const [invoices, setInvoices] = useState([]);
+  const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   useEffect(() => {
-    loadInvoices();
+    loadData();
   }, []);
 
-  const loadInvoices = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const data = await getInvoices();
-      setInvoices(data || []);
+      const [invData, sellersData] = await Promise.all([
+        getInvoices(),
+        getSellers()
+      ]);
+      setInvoices(invData || []);
+      setSellers(sellersData || []);
     } catch (e) {
       error('Error al cargar facturas: ' + e.message);
     } finally {
@@ -66,7 +71,7 @@ export default function InvoiceHistoryPage() {
         </div>
 
         <button
-          onClick={loadInvoices}
+          onClick={loadData}
           className="self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#0d1424] border border-slate-800 hover:bg-slate-800 text-xs font-bold text-slate-300 transition-colors cursor-pointer uppercase tracking-wider"
         >
           <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
@@ -106,34 +111,48 @@ export default function InvoiceHistoryPage() {
                   <th className="p-4">N° Factura</th>
                   <th className="p-4">Fecha Emisión</th>
                   <th className="p-4">Cliente / Taller</th>
-                  <th className="p-4">Asesor SOZA</th>
+                  <th className="p-4">Vendedor</th>
                   <th className="p-4">Cant. Items</th>
                   <th className="p-4 text-right">Total Facturado</th>
                   <th className="p-4 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {filteredInvoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-4 font-mono font-bold text-cyan-400">
-                      {inv.invoice_number}
-                    </td>
-                    <td className="p-4 whitespace-nowrap">
-                      {new Date(inv.invoice_date || inv.created_at).toLocaleDateString('es-ES', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
-                    </td>
-                    <td className="p-4 font-bold text-slate-100">
-                      {inv.client_name}
-                    </td>
-                    <td className="p-4 text-cyan-300 font-bold">
-                      {inv.seller_name || 'Venta de Mostrador'}
-                    </td>
-                    <td className="p-4 font-mono">
-                      {inv.items_snapshot ? inv.items_snapshot.length : 0} repuesto(s)
-                    </td>
+                {filteredInvoices.map((inv) => {
+                  const seller = sellers.find(s => 
+                    s.name?.toLowerCase().trim() === inv.seller_name?.toLowerCase().trim() ||
+                    s.id === inv.seller_id
+                  );
+                  return (
+                    <tr key={inv.id} className="hover:bg-slate-800/40 transition-colors">
+                      <td className="p-4 font-mono font-bold text-cyan-400">
+                        {inv.invoice_number}
+                      </td>
+                      <td className="p-4 whitespace-nowrap">
+                        {new Date(inv.invoice_date || inv.created_at).toLocaleDateString('es-ES', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </td>
+                      <td className="p-4 font-bold text-slate-100">
+                        {inv.client_name}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5">
+                          <span className="text-cyan-300 font-bold whitespace-nowrap">
+                            {inv.seller_name || 'Venta de Mostrador'}
+                          </span>
+                          {seller?.zone && (
+                            <span className="text-[10px] text-slate-400 font-normal bg-slate-800 px-2 py-0.5 rounded border border-slate-700/60 whitespace-nowrap">
+                              {seller.zone}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4 font-mono">
+                        {inv.items_snapshot ? inv.items_snapshot.length : 0} repuesto(s)
+                      </td>
                     <td className="p-4 text-right font-black text-cyan-400 font-mono text-sm">
                       ${Number(inv.total_amount || 0).toFixed(2)}
                     </td>
@@ -159,8 +178,9 @@ export default function InvoiceHistoryPage() {
                         </Button>
                       </div>
                     </td>
-                  </tr>
-                ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

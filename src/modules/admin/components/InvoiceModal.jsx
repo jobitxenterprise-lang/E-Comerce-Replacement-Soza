@@ -90,7 +90,7 @@ export default function InvoiceModal({ isOpen, onClose, invoice }) {
                 </span>
                 <p className="font-bold text-slate-900 text-sm">{invoice.client_name}</p>
                 <p className="text-slate-600 text-[11px]">
-                  Asesor: {invoice.seller_name || 'Venta Mostrador'}  |  Ref. Pedido: {invoice.order_number || 'S/N'}
+                  Vendedor: {invoice.seller_name || 'Venta Mostrador'}  |  Ref. Pedido: {invoice.order_number || 'S/N'}
                 </p>
               </div>
             </div>

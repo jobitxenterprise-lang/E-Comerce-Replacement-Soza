@@ -109,7 +109,7 @@ export function generateInvoicePDF({
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(100, 116, 139);
-  doc.text(`Asesor Asignado: ${sellerName || 'Venta Mostrador'}  |  Ref. Pedido: ${orderNumber || 'S/N'}`, 14, 72.5);
+  doc.text(`Vendedor: ${sellerName || 'Venta Mostrador'}  |  Ref. Pedido: ${orderNumber || 'S/N'}`, 14, 72.5);
 
   // --- LADO DERECHO: NÚMERO DE FACTURA (10px) Y FECHA DE EMISIÓN ---
   doc.setFont('helvetica', 'bold');
