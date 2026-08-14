@@ -90,7 +90,11 @@ export async function addProduct(productData) {
 
   if (isSupabaseConfigured) {
     try {
-      const { data, error } = await supabase.from('products').insert([productData]).select().single();
+      const { data, error } = await supabase
+        .from('products')
+        .insert([{ ...productData, id: newProduct.id }])
+        .select()
+        .single();
       if (!error && data) {
         const local = getLocal(LOCAL_STORAGE_KEYS.PRODUCTS);
         setLocal(LOCAL_STORAGE_KEYS.PRODUCTS, [data, ...local]);
@@ -126,6 +130,16 @@ export async function updateProductStock(id, newStock) {
 }
 
 export async function decreaseProductStock(productId, qty) {
+  if (isSupabaseConfigured) {
+    try {
+      await supabase.rpc('decrease_product_stock', {
+        p_product_id: productId,
+        p_qty: Number(qty || 0)
+      });
+    } catch (e) {
+      console.warn('Error RPC decrease_product_stock:', e);
+    }
+  }
   const products = getLocal(LOCAL_STORAGE_KEYS.PRODUCTS);
   const prod = products.find(p => p.id === productId);
   if (prod) {
@@ -158,6 +172,23 @@ export async function getSellerById(id) {
 }
 
 export async function authenticateSeller(username, password) {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('sellers')
+        .select('*')
+        .ilike('username', username.trim())
+        .eq('password', password.trim())
+        .eq('active', true)
+        .single();
+      if (!error && data) {
+        return { success: true, seller: data };
+      }
+    } catch (e) {
+      console.warn('Error auth Supabase vendedor, probando local:', e);
+    }
+  }
+
   const sellers = getLocal(LOCAL_STORAGE_KEYS.SELLERS);
   const seller = sellers.find(
     s => (s.username.toLowerCase() === username.trim().toLowerCase()) && 
@@ -174,6 +205,23 @@ export async function authenticateSeller(username, password) {
 // 3. ADMINISTRADOR
 // ==========================================
 export async function authenticateAdmin(usernameOrEmail, password) {
+  if (isSupabaseConfigured) {
+    try {
+      const query = usernameOrEmail.trim();
+      const { data, error } = await supabase
+        .from('admins')
+        .select('*')
+        .or(`username.ilike.${query},email.ilike.${query}`)
+        .eq('password', password.trim())
+        .single();
+      if (!error && data) {
+        return { success: true, admin: data };
+      }
+    } catch (e) {
+      console.warn('Error auth Supabase admin, probando local:', e);
+    }
+  }
+
   const admins = getLocal(LOCAL_STORAGE_KEYS.ADMINS);
   const query = usernameOrEmail.trim().toLowerCase();
   const admin = admins.find(
@@ -237,6 +285,28 @@ export async function createOrder({ client_name, seller_id, origin = 'publico', 
 }
 
 export async function getOrders() {
+  if (isSupabaseConfigured) {
+    try {
+      const { data: dbOrders, error: orderErr } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          seller:sellers(*),
+          items:order_items(*)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (!orderErr && dbOrders && dbOrders.length > 0) {
+        return dbOrders.map(o => ({
+          ...o,
+          seller_name: o.seller ? o.seller.name : 'No Asignado'
+        }));
+      }
+    } catch (e) {
+      console.warn('Fallback a pedidos locales:', e);
+    }
+  }
+
   const orders = getLocal(LOCAL_STORAGE_KEYS.ORDERS);
   const orderItems = getLocal(LOCAL_STORAGE_KEYS.ORDER_ITEMS);
   const sellers = getLocal(LOCAL_STORAGE_KEYS.SELLERS);
@@ -261,7 +331,6 @@ export async function getOrdersBySeller(sellerId) {
 export async function updateOrderStatus(orderId, newStatus) {
   const orders = getLocal(LOCAL_STORAGE_KEYS.ORDERS);
   const targetOrder = orders.find(o => o.id === orderId);
-  if (!targetOrder) throw new Error('Pedido no encontrado');
 
   const updatedOrders = orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
   setLocal(LOCAL_STORAGE_KEYS.ORDERS, updatedOrders);
@@ -275,7 +344,7 @@ export async function updateOrderStatus(orderId, newStatus) {
   }
 
   // SI PASA A 'enviado', SE CREA AUTOMÁTICAMENTE EN TABLA 'PedidoAdmin'
-  if (newStatus === 'enviado') {
+  if (newStatus === 'enviado' && targetOrder) {
     const existingAdminOrders = getLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDERS);
     const alreadyExists = existingAdminOrders.some(ao => ao.order_id === orderId);
 
@@ -333,6 +402,29 @@ export async function updateOrderStatus(orderId, newStatus) {
 // 5. PEDIDOS ADMIN (Tabla "PedidoAdmin")
 // ==========================================
 export async function getAdminOrders() {
+  if (isSupabaseConfigured) {
+    try {
+      const { data: dbAdminOrders, error } = await supabase
+        .from('admin_orders')
+        .select(`
+          *,
+          seller:sellers(*),
+          items:admin_order_items(*),
+          original_order:orders(*)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (!error && dbAdminOrders && dbAdminOrders.length > 0) {
+        return dbAdminOrders.map(ao => ({
+          ...ao,
+          seller_name: ao.seller ? ao.seller.name : 'Venta Directa'
+        }));
+      }
+    } catch (e) {
+      console.warn('Fallback a pedidos admin locales:', e);
+    }
+  }
+
   const adminOrders = getLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDERS);
   const adminOrderItems = getLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDER_ITEMS);
   const sellers = getLocal(LOCAL_STORAGE_KEYS.SELLERS);
@@ -390,24 +482,54 @@ export async function updateAdminOrderItems(adminOrderId, updatedItems) {
   });
 
   setLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDERS, updatedOrders);
+
+  if (isSupabaseConfigured) {
+    try {
+      await supabase
+        .from('admin_orders')
+        .update({ adjusted_total: newTotal, edited_by_admin: true })
+        .eq('id', adminOrderId);
+
+      for (const it of updatedItems) {
+        await supabase
+          .from('admin_order_items')
+          .update({
+            adjusted_quantity: it.adjusted_quantity,
+            subtotal: it.adjusted_quantity * Number(it.unit_price || 0)
+          })
+          .eq('admin_order_id', adminOrderId)
+          .eq('product_id', it.product_id);
+      }
+    } catch (e) {
+      console.warn('Error Supabase updateAdminOrderItems:', e);
+    }
+  }
+
   return { success: true, newTotal };
 }
 
 export async function updateAdminOrderStatus(adminOrderId, newStatus) {
   const adminOrders = getLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDERS);
   const target = adminOrders.find(ao => ao.id === adminOrderId);
-  if (!target) throw new Error('Pedido de administración no encontrado');
 
   const updated = adminOrders.map(ao => ao.id === adminOrderId ? { ...ao, status: newStatus } : ao);
   setLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDERS, updated);
 
+  if (isSupabaseConfigured) {
+    try {
+      await supabase.from('admin_orders').update({ status: newStatus }).eq('id', adminOrderId);
+    } catch (e) {
+      console.warn('Error Supabase updateAdminOrderStatus:', e);
+    }
+  }
+
   let generatedInvoice = null;
 
-  if (newStatus === 'facturado') {
+  if (newStatus === 'facturado' && target) {
     const adminOrderItems = getLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDER_ITEMS).filter(it => it.admin_order_id === adminOrderId);
     const sellers = getLocal(LOCAL_STORAGE_KEYS.SELLERS);
     const seller = sellers.find(s => s.id === target.seller_id);
-    const company = getLocal(LOCAL_STORAGE_KEYS.SETTINGS);
+    const company = await getCompanySettings();
 
     // 1. Descontar Stock de los repuestos
     for (const item of adminOrderItems) {
@@ -435,6 +557,14 @@ export async function updateAdminOrderStatus(adminOrderId, newStatus) {
     };
 
     setLocal(LOCAL_STORAGE_KEYS.INVOICES, [generatedInvoice, ...invoices]);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('invoices').insert([generatedInvoice]);
+      } catch (e) {
+        console.warn('Error Supabase insert invoice:', e);
+      }
+    }
   }
 
   return { success: true, newStatus, invoice: generatedInvoice };
@@ -444,6 +574,20 @@ export async function updateAdminOrderStatus(adminOrderId, newStatus) {
 // 6. FACTURAS
 // ==========================================
 export async function getInvoices() {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data && data.length > 0) {
+        setLocal(LOCAL_STORAGE_KEYS.INVOICES, data);
+        return data;
+      }
+    } catch (e) {
+      console.warn('Fallback a facturas locales:', e);
+    }
+  }
   return getLocal(LOCAL_STORAGE_KEYS.INVOICES);
 }
 
@@ -451,10 +595,34 @@ export async function getInvoices() {
 // 7. CONFIGURACIÓN DE EMPRESA
 // ==========================================
 export async function getCompanySettings() {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('company_settings')
+        .select('value')
+        .eq('key', 'general')
+        .single();
+      if (!error && data && data.value) {
+        setLocal(LOCAL_STORAGE_KEYS.SETTINGS, data.value);
+        return data.value;
+      }
+    } catch (e) {
+      console.warn('Fallback a configuración local:', e);
+    }
+  }
   return getLocal(LOCAL_STORAGE_KEYS.SETTINGS) || initialCompanySettings;
 }
 
 export async function updateCompanySettings(newSettings) {
   setLocal(LOCAL_STORAGE_KEYS.SETTINGS, newSettings);
+  if (isSupabaseConfigured) {
+    try {
+      await supabase
+        .from('company_settings')
+        .upsert({ key: 'general', value: newSettings, updated_at: new Date().toISOString() });
+    } catch (e) {
+      console.warn('Error Supabase updateCompanySettings:', e);
+    }
+  }
   return newSettings;
 }
