@@ -50,7 +50,6 @@ export default function AddProductPage() {
         price: editingProduct.price || '',
         cost_price: editingProduct.cost_price || '',
         stock: editingProduct.stock !== undefined ? editingProduct.stock : '',
-        description: editingProduct.description || '',
         image_url: editingProduct.image_url || '',
         active: editingProduct.active !== false
       }
@@ -60,7 +59,6 @@ export default function AddProductPage() {
         price: '',
         cost_price: '',
         stock: 10,
-        description: '',
         image_url: '',
         active: true
       };
@@ -265,31 +263,7 @@ export default function AddProductPage() {
                 </span>
               </div>
 
-              {/* Textarea Descripción */}
-              <div className="flex flex-col gap-1.5 font-sport">
-                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                  Especificaciones Técnicas y Compatibilidad <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="description"
-                  rows="3"
-                  value={values.description}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="Describe compatibilidad (motos 125cc, 150cc, 200cc), marca OEM, material y detalles de instalación..."
-                  className={`w-full bg-[#080d18] text-slate-100 placeholder:text-slate-500 rounded-xl px-3.5 py-2.5 text-sm transition-all border outline-none
-                    ${touched.description && errors.description
-                      ? 'border-red-500/80 focus:border-red-500'
-                      : 'border-slate-700/80 focus:border-cyan-500'
-                    }
-                  `}
-                />
-                {touched.description && errors.description && (
-                  <span className="text-xs text-red-400 font-medium">
-                    {errors.description}
-                  </span>
-                )}
-              </div>
+
 
               {/* Botón Guardar */}
               <div className="flex items-center justify-end gap-3 pt-2 font-sport">

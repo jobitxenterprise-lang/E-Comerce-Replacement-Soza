@@ -29,10 +29,6 @@ export const productValidationSchema = Yup.object().shape({
     .integer('Debe ser un número entero')
     .min(0, 'El stock no puede ser negativo')
     .required('El stock inicial es obligatorio'),
-  description: Yup.string()
-    .trim()
-    .min(10, 'La descripción debe tener al menos 10 caracteres')
-    .required('La descripción es obligatoria'),
   image_url: Yup.string()
     .url('Debe ser una URL válida')
     .nullable()
