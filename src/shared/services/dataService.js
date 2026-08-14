@@ -1,7 +1,8 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient';
-import { initialProducts, initialSellers, initialAdmins, initialCompanySettings } from '../../data/seedData';
+import { initialProducts, initialSellers, initialAdmins, initialCompanySettings, productCategories } from '../../data/seedData';
 
 const LOCAL_STORAGE_KEYS = {
+  CATEGORIES: 'soza_moto_categories_v2',
   PRODUCTS: 'soza_moto_products_v2',
   SELLERS: 'soza_moto_sellers_v2',
   ADMINS: 'soza_moto_admins_v2',
@@ -15,6 +16,14 @@ const LOCAL_STORAGE_KEYS = {
 
 // Inicializar almacenamiento local si está vacío
 function initLocalStorage() {
+  if (!localStorage.getItem(LOCAL_STORAGE_KEYS.CATEGORIES)) {
+    const defaultCategories = productCategories.filter(c => c !== 'Todos').map((name, idx) => ({
+      id: `cat-000${idx + 1}`,
+      name,
+      active: true
+    }));
+    localStorage.setItem(LOCAL_STORAGE_KEYS.CATEGORIES, JSON.stringify(defaultCategories));
+  }
   if (!localStorage.getItem(LOCAL_STORAGE_KEYS.PRODUCTS)) {
     localStorage.setItem(LOCAL_STORAGE_KEYS.PRODUCTS, JSON.stringify(initialProducts));
   }
@@ -61,7 +70,59 @@ function setLocal(key, value) {
 }
 
 // ==========================================
-// 1. PRODUCTOS
+// 1. CATEGORÍAS
+// ==========================================
+export async function getCategories() {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('active', true)
+        .order('name', { ascending: true });
+      if (!error && data && data.length > 0) {
+        setLocal(LOCAL_STORAGE_KEYS.CATEGORIES, data);
+        return data;
+      }
+    } catch (e) {
+      console.warn('Fallback a categorías locales:', e);
+    }
+  }
+  return getLocal(LOCAL_STORAGE_KEYS.CATEGORIES);
+}
+
+export async function addCategory(categoryData) {
+  const newCat = {
+    id: 'cat-' + crypto.randomUUID(),
+    active: true,
+    created_at: new Date().toISOString(),
+    ...categoryData
+  };
+
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .insert([newCat])
+        .select()
+        .single();
+      if (!error && data) {
+        const local = getLocal(LOCAL_STORAGE_KEYS.CATEGORIES);
+        setLocal(LOCAL_STORAGE_KEYS.CATEGORIES, [...local, data]);
+        return data;
+      }
+    } catch (e) {
+      console.warn('Error Supabase addCategory:', e);
+    }
+  }
+
+  const local = getLocal(LOCAL_STORAGE_KEYS.CATEGORIES);
+  setLocal(LOCAL_STORAGE_KEYS.CATEGORIES, [...local, newCat]);
+  return newCat;
+}
+
+// ==========================================
+// 2. PRODUCTOS
 // ==========================================
 export async function getProducts() {
   if (isSupabaseConfigured) {
@@ -149,7 +210,7 @@ export async function decreaseProductStock(productId, qty) {
 }
 
 // ==========================================
-// 2. VENDEDORES
+// 3. VENDEDORES
 // ==========================================
 export async function getSellers() {
   if (isSupabaseConfigured) {
@@ -202,7 +263,7 @@ export async function authenticateSeller(username, password) {
 }
 
 // ==========================================
-// 3. ADMINISTRADOR
+// 4. ADMINISTRADOR
 // ==========================================
 export async function authenticateAdmin(usernameOrEmail, password) {
   if (isSupabaseConfigured) {
@@ -235,7 +296,7 @@ export async function authenticateAdmin(usernameOrEmail, password) {
 }
 
 // ==========================================
-// 4. PEDIDOS (Tabla "Pedido" - Vendedor / Público)
+// 5. PEDIDOS (Tabla "Pedido" - Vendedor / Público)
 // ==========================================
 export async function createOrder({ client_name, seller_id, origin = 'publico', items = [], notes = '' }) {
   const orderNumber = 'SZ-MOTO-' + Math.floor(100000 + Math.random() * 900000);
@@ -399,7 +460,7 @@ export async function updateOrderStatus(orderId, newStatus) {
 }
 
 // ==========================================
-// 5. PEDIDOS ADMIN (Tabla "PedidoAdmin")
+// 6. PEDIDOS ADMIN (Tabla "PedidoAdmin")
 // ==========================================
 export async function getAdminOrders() {
   if (isSupabaseConfigured) {
@@ -571,7 +632,7 @@ export async function updateAdminOrderStatus(adminOrderId, newStatus) {
 }
 
 // ==========================================
-// 6. FACTURAS
+// 7. FACTURAS
 // ==========================================
 export async function getInvoices() {
   if (isSupabaseConfigured) {
@@ -592,7 +653,7 @@ export async function getInvoices() {
 }
 
 // ==========================================
-// 7. CONFIGURACIÓN DE EMPRESA
+// 8. CONFIGURACIÓN DE EMPRESA
 // ==========================================
 export async function getCompanySettings() {
   if (isSupabaseConfigured) {

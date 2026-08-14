@@ -6,13 +6,14 @@ import CartDrawer from '../components/CartDrawer';
 import CheckoutModal from '../components/CheckoutModal';
 import CategoryFilter from '../../../shared/components/CategoryFilter';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
-import { getProducts } from '../../../shared/services/dataService';
-import { productCategories, motorcycleBrands } from '../../../data/seedData';
+import { getProducts, getCategories } from '../../../shared/services/dataService';
+import { productCategories as defaultCategories, motorcycleBrands } from '../../../data/seedData';
 import { Search, Zap, SlidersHorizontal, ShieldCheck, Truck, Wrench } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function CatalogPage({ onOpenSellerLogin }) {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState(['Todos']);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,16 +22,26 @@ export default function CatalogPage({ onOpenSellerLogin }) {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   useEffect(() => {
-    loadProducts();
+    loadData();
   }, []);
 
-  const loadProducts = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const data = await getProducts();
-      setProducts(data || []);
+      const [prodsData, catsData] = await Promise.all([
+        getProducts(),
+        getCategories()
+      ]);
+      setProducts(prodsData || []);
+      if (catsData && catsData.length > 0) {
+        const catNames = catsData.map(c => c.name || c);
+        setCategories(['Todos', ...catNames]);
+      } else {
+        setCategories(defaultCategories);
+      }
     } catch (e) {
       console.error(e);
+      setCategories(defaultCategories);
     } finally {
       setLoading(false);
     }
@@ -163,10 +174,10 @@ export default function CatalogPage({ onOpenSellerLogin }) {
               />
             </div>
 
-            {/* Selector de Categorías Dropdown (4 columnas) */}
+            {/* 2. Selector Desplegable de Categorías (4 columnas) */}
             <div className="md:col-span-4">
               <CategoryFilter
-                productCategories={productCategories}
+                productCategories={categories}
                 selectedCategory={selectedCategory}
                 setSelectedCategory={setSelectedCategory}
               />

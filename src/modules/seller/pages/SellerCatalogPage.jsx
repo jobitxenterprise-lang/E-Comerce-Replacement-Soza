@@ -6,14 +6,15 @@ import CartDrawer from '../../public/components/CartDrawer';
 import CheckoutModal from '../../public/components/CheckoutModal';
 import CategoryFilter from '../../../shared/components/CategoryFilter';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
-import { getProducts } from '../../../shared/services/dataService';
-import { productCategories } from '../../../data/seedData';
+import { getProducts, getCategories } from '../../../shared/services/dataService';
+import { productCategories as defaultCategories } from '../../../data/seedData';
 import { useAuth } from '../../../shared/context/AuthContext';
-import { Search, Wrench, SlidersHorizontal, UserCheck } from 'lucide-react';
+import { Search, SlidersHorizontal, UserCheck } from 'lucide-react';
 
 export default function SellerCatalogPage() {
   const { currentSeller } = useAuth();
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState(['Todos']);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,16 +23,26 @@ export default function SellerCatalogPage() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   useEffect(() => {
-    loadProducts();
+    loadData();
   }, []);
 
-  const loadProducts = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const data = await getProducts();
-      setProducts(data || []);
+      const [prodsData, catsData] = await Promise.all([
+        getProducts(),
+        getCategories()
+      ]);
+      setProducts(prodsData || []);
+      if (catsData && catsData.length > 0) {
+        const catNames = catsData.map(c => c.name || c);
+        setCategories(['Todos', ...catNames]);
+      } else {
+        setCategories(defaultCategories);
+      }
     } catch (e) {
       console.error(e);
+      setCategories(defaultCategories);
     } finally {
       setLoading(false);
     }
@@ -104,7 +115,7 @@ export default function SellerCatalogPage() {
             {/* Selector de Categorías (4 columnas) */}
             <div className="md:col-span-4">
               <CategoryFilter
-                productCategories={productCategories}
+                productCategories={categories}
                 selectedCategory={selectedCategory}
                 setSelectedCategory={setSelectedCategory}
               />

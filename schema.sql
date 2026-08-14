@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- SCHEMA SQL COMPLETO: REPUESTOS SOZA — MATAGALPA, NICARAGUA
 -- Compatible con Supabase PostgreSQL
--- Incluye: Repuestos de Motos, Vendedores, Administradores, Pedidos (Vendedor/Público),
+-- Incluye: Categorías, Repuestos de Motos, Vendedores, Administradores, Pedidos (Vendedor/Público),
 --          Pedidos Admin (Edición de cantidades), Detalle, Facturas, Configuración,
 --          Funciones RPC, Políticas RLS y Datos Semilla Oficiales.
 -- ==============================================================================
@@ -20,7 +20,18 @@ CREATE TABLE IF NOT EXISTS public.company_settings (
 );
 
 -- ------------------------------------------------------------------------------
--- 2. TABLA DE PRODUCTOS / REPUESTOS DE MOTO
+-- 2. TABLA DE CATEGORÍAS DE PRODUCTOS
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.categories (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  name TEXT UNIQUE NOT NULL,
+  description TEXT,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ------------------------------------------------------------------------------
+-- 3. TABLA DE PRODUCTOS / REPUESTOS DE MOTO
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.products (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -36,7 +47,7 @@ CREATE TABLE IF NOT EXISTS public.products (
 );
 
 -- ------------------------------------------------------------------------------
--- 3. TABLA DE VENDEDORES
+-- 4. TABLA DE VENDEDORES
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.sellers (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -49,7 +60,7 @@ CREATE TABLE IF NOT EXISTS public.sellers (
 );
 
 -- ------------------------------------------------------------------------------
--- 4. TABLA DE ADMINISTRADORES
+-- 5. TABLA DE ADMINISTRADORES
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.admins (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -61,7 +72,7 @@ CREATE TABLE IF NOT EXISTS public.admins (
 );
 
 -- ------------------------------------------------------------------------------
--- 5. TABLA DE PEDIDOS (Manejada por Público / Vendedor)
+-- 6. TABLA DE PEDIDOS (Manejada por Público / Vendedor)
 -- Estados: 'pendiente_recibido', 'recibido', 'enviado'
 -- Origen: 'publico', 'vendedor'
 -- ------------------------------------------------------------------------------
@@ -79,7 +90,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
 );
 
 -- ------------------------------------------------------------------------------
--- 6. TABLA DE DETALLE DE PEDIDOS (Order Items)
+-- 7. TABLA DE DETALLE DE PEDIDOS (Order Items)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.order_items (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -93,7 +104,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
 );
 
 -- ------------------------------------------------------------------------------
--- 7. TABLA DE GESTIÓN DEL ADMIN (PedidoAdmin)
+-- 8. TABLA DE GESTIÓN DEL ADMIN (PedidoAdmin)
 -- Creada automáticamente cuando el vendedor pasa el pedido a 'enviado'
 -- Estados: 'pendiente', 'facturado', 'cancelado'
 -- ------------------------------------------------------------------------------
@@ -112,7 +123,7 @@ CREATE TABLE IF NOT EXISTS public.admin_orders (
 );
 
 -- ------------------------------------------------------------------------------
--- 8. TABLA DE DETALLE DE PEDIDO ADMIN (DetallePedidoAdmin)
+-- 9. TABLA DE DETALLE DE PEDIDO ADMIN (DetallePedidoAdmin)
 -- Permite editar cantidades ajustadas sin alterar el pedido original del vendedor
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.admin_order_items (
@@ -128,7 +139,7 @@ CREATE TABLE IF NOT EXISTS public.admin_order_items (
 );
 
 -- ------------------------------------------------------------------------------
--- 9. TABLA DE FACTURAS
+-- 10. TABLA DE FACTURAS
 -- Generada automáticamente cuando el admin marca PedidoAdmin como 'facturado'
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.invoices (
@@ -147,7 +158,7 @@ CREATE TABLE IF NOT EXISTS public.invoices (
 );
 
 -- ------------------------------------------------------------------------------
--- 10. FUNCIONES RPC
+-- 11. FUNCIONES RPC
 -- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.decrease_product_stock(
   p_product_id TEXT,
@@ -162,9 +173,10 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ------------------------------------------------------------------------------
--- 11. HABILITAR RLS Y PERMISOS DE ACCESO
+-- 12. HABILITAR RLS Y PERMISOS DE ACCESO
 -- ------------------------------------------------------------------------------
 ALTER TABLE public.company_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sellers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
@@ -175,6 +187,7 @@ ALTER TABLE public.admin_order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Permitir todo en company_settings" ON public.company_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Permitir todo en categories" ON public.categories FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo en products" ON public.products FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo en sellers" ON public.sellers FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo en admins" ON public.admins FOR ALL USING (true) WITH CHECK (true);
@@ -185,7 +198,7 @@ CREATE POLICY "Permitir todo en admin_order_items" ON public.admin_order_items F
 CREATE POLICY "Permitir todo en invoices" ON public.invoices FOR ALL USING (true) WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------
--- 12. DATOS SEMILLA (SEED DATA)
+-- 13. DATOS SEMILLA (SEED DATA)
 -- ------------------------------------------------------------------------------
 
 INSERT INTO public.company_settings (key, value)
@@ -204,6 +217,19 @@ VALUES (
     "logo_url": ""
   }'::jsonb
 ) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+
+-- CATEGORÍAS OFICIALES DE MOTOCICLETAS
+INSERT INTO public.categories (id, name, description, active)
+VALUES
+  ('cat-0001', 'Llantas & Neumáticos', 'Llantas deportivas, todo terreno, cámaras y neumáticos para motos', true),
+  ('cat-0002', 'Cascos & Protección', 'Cascos certificados DOT/ECE, guantes, chaquetas y rodilleras', true),
+  ('cat-0003', 'Baterías & Eléctrico', 'Baterías de gel selladas, bombillos LED, ramales y reguladores', true),
+  ('cat-0004', 'Repuestos de Motor & OEM', 'Pistones, cilindros, anillos, válvulas, carburadores y juntas', true),
+  ('cat-0005', 'Kit de Arrastre & Cadenas', 'Catalinas, piñones, cadenas reforzadas y tensores', true),
+  ('cat-0006', 'Frenos & Suspensión', 'Pastillas, zapatas, discos de freno, barras y amortiguadores', true),
+  ('cat-0007', 'Aceites & Lubricantes', 'Aceites 4T sintéticos, semi-sintéticos, lubricantes de cadena y aditivos', true),
+  ('cat-0008', 'Accesorios & Tuning', 'Retrovisores, manubrios, sliders, escapes y luces exploradoras', true)
+ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO public.admins (id, username, password, email, name)
 VALUES (
