@@ -5,7 +5,7 @@ import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import Badge from '../../../shared/components/Badge';
 import Button from '../../../shared/components/Button';
 import ConfirmDialog from '../../../shared/components/ConfirmDialog';
-import { getAdminOrders, updateAdminOrderStatus } from '../../../shared/services/dataService';
+import { getAdminOrders, updateAdminOrderStatus, softDeleteOrder } from '../../../shared/services/dataService';
 import { useToast } from '../../../shared/context/ToastContext';
 import {
   Inbox,
@@ -18,7 +18,8 @@ import {
   RefreshCw,
   Search,
   CheckCircle2,
-  Wrench
+  Wrench,
+  Trash2
 } from 'lucide-react';
 
 export default function ReceiveOrdersPage() {
@@ -75,6 +76,17 @@ export default function ReceiveOrdersPage() {
       loadOrders();
     } catch (e) {
       error('Error al cancelar pedido: ' + e.message);
+    }
+  };
+
+  const handleDeleteOrder = async (adminOrderId) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este pedido?')) return;
+    try {
+      await softDeleteOrder(adminOrderId, 'admin', 'admin', 'ADMIN_ORDER');
+      success('Pedido ocultado correctamente.');
+      loadOrders();
+    } catch (e) {
+      error('Error al eliminar: ' + e.message);
     }
   };
 
@@ -343,6 +355,17 @@ export default function ReceiveOrdersPage() {
                       Pedido Anulado
                     </span>
                   )}
+
+                  {/* Botón Eliminar Oculto para Administrador */}
+                  <div className="mt-2 lg:mt-0 lg:ml-2">
+                    <button
+                      onClick={() => handleDeleteOrder(order.id)}
+                      className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors"
+                      title="Eliminar pedido del historial"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );

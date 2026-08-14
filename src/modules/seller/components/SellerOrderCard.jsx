@@ -1,12 +1,14 @@
 import React from 'react';
 import Badge from '../../../shared/components/Badge';
 import Button from '../../../shared/components/Button';
-import { Clock, CheckCircle, Send, User, Calendar, MessageSquare, Wrench } from 'lucide-react';
+import { Clock, CheckCircle, Send, User, Calendar, MessageSquare, Wrench, Edit3, Trash2 } from 'lucide-react';
 
 export default function SellerOrderCard({
   order,
   onMarkReceived,
-  onOpenWhatsApp
+  onOpenWhatsApp,
+  onEdit,
+  onDelete
 }) {
   const isPendingReceived = order.status === 'pendiente_recibido';
   const isReceived = order.status === 'recibido';
@@ -53,6 +55,18 @@ export default function SellerOrderCard({
           </span>
        
         </div>
+
+        {/* Acciones Rápidas */}
+        {!isSent && (
+          <div className="flex gap-2 mb-3">
+            <button onClick={() => onEdit(order)} className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400 hover:text-cyan-400 bg-slate-800/50 px-2 py-1 rounded transition-colors font-sport">
+              <Edit3 className="w-3 h-3" /> Editar
+            </button>
+            <button onClick={() => onDelete(order.id)} className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400 hover:text-red-400 bg-slate-800/50 px-2 py-1 rounded transition-colors font-sport">
+              <Trash2 className="w-3 h-3" /> Eliminar
+            </button>
+          </div>
+        )}
 
         {/* Lista de Items */}
         <div className="bg-[#080d18] rounded-xl p-3 border border-slate-800 space-y-1.5 max-h-36 overflow-y-auto font-sport">

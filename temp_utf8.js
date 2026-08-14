@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+﻿import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { initialProducts, initialSellers, initialAdmins, initialCompanySettings, productCategories } from '../../data/seedData';
 
 const LOCAL_STORAGE_KEYS = {
@@ -14,7 +14,7 @@ const LOCAL_STORAGE_KEYS = {
   SETTINGS: 'soza_moto_settings_v2'
 };
 
-// Inicializar almacenamiento local si está vacío
+// Inicializar almacenamiento local si est├í vac├¡o
 function initLocalStorage() {
   if (!localStorage.getItem(LOCAL_STORAGE_KEYS.CATEGORIES)) {
     const defaultCategories = productCategories.filter(c => c !== 'Todos').map((name, idx) => ({
@@ -70,7 +70,7 @@ function setLocal(key, value) {
 }
 
 // ==========================================
-// 1. CATEGORÍAS
+// 1. CATEGOR├ìAS
 // ==========================================
 export async function getCategories() {
   if (isSupabaseConfigured) {
@@ -85,7 +85,7 @@ export async function getCategories() {
         return data;
       }
     } catch (e) {
-      console.warn('Fallback a categorías locales:', e);
+      console.warn('Fallback a categor├¡as locales:', e);
     }
   }
   return getLocal(LOCAL_STORAGE_KEYS.CATEGORIES);
@@ -122,10 +122,10 @@ export async function addCategory(categoryData) {
 }
 
 // ==========================================
-// 1.5. STORAGE (IMÁGENES)
+// 1.5. STORAGE (IM├üGENES)
 // ==========================================
 export async function uploadProductImage(file) {
-  if (!isSupabaseConfigured) throw new Error("Supabase no está configurado.");
+  if (!isSupabaseConfigured) throw new Error("Supabase no est├í configurado.");
   
   const fileExt = file.name.split('.').pop();
   const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
@@ -136,7 +136,7 @@ export async function uploadProductImage(file) {
     .upload(filePath, file);
 
   if (uploadError) {
-    throw new Error(`Error al subir imagen: ${uploadError.message}. Asegúrate de crear el bucket "public-imagen" público.`);
+    throw new Error(`Error al subir imagen: ${uploadError.message}. Aseg├║rate de crear el bucket "public-imagen" p├║blico.`);
   }
 
   const { data } = supabase.storage
@@ -235,7 +235,7 @@ export async function decreaseProductStock(productId, qty) {
 }
 
 // ==========================================
-// 3. VENDEDORES & AUTENTICACIÓN (SUPABASE AUTH + TABLA)
+// 3. VENDEDORES & AUTENTICACI├ôN (SUPABASE AUTH + TABLA)
 // ==========================================
 export async function getSellers() {
   if (isSupabaseConfigured) {
@@ -316,11 +316,11 @@ export async function authenticateSeller(usernameOrEmail, password) {
   if (seller) {
     return { success: true, seller };
   }
-  return { success: false, message: 'Usuario o contraseña de vendedor incorrectos.' };
+  return { success: false, message: 'Usuario o contrase├▒a de vendedor incorrectos.' };
 }
 
 // ==========================================
-// 4. ADMINISTRADOR & AUTENTICACIÓN (SUPABASE AUTH + FALLBACK)
+// 4. ADMINISTRADOR & AUTENTICACI├ôN (SUPABASE AUTH + FALLBACK)
 // ==========================================
 export async function authenticateAdmin(usernameOrEmail, password) {
   if (isSupabaseConfigured) {
@@ -364,7 +364,7 @@ export async function authenticateAdmin(usernameOrEmail, password) {
 }
 
 // ==========================================
-// 5. PEDIDOS (Tabla "Pedido" - Vendedor / Público)
+// 5. PEDIDOS (Tabla "Pedido" - Vendedor / P├║blico)
 // ==========================================
 export async function createOrder({ client_name, seller_id, origin = 'publico', items = [], notes = '' }) {
   const orderNumber = 'SZ-MOTO-' + Math.floor(100000 + Math.random() * 900000);
@@ -426,19 +426,17 @@ export async function getOrders() {
         .order('created_at', { ascending: false });
 
       if (!orderErr && dbOrders && dbOrders.length > 0) {
-        return dbOrders
-          .filter(o => o.is_deleted !== true)
-          .map(o => ({
-            ...o,
-            seller_name: o.seller ? o.seller.name : 'No Asignado'
-          }));
+        return dbOrders.map(o => ({
+          ...o,
+          seller_name: o.seller ? o.seller.name : 'No Asignado'
+        }));
       }
     } catch (e) {
       console.warn('Fallback a pedidos locales:', e);
     }
   }
 
-  const orders = getLocal(LOCAL_STORAGE_KEYS.ORDERS).filter(o => o.is_deleted !== true);
+  const orders = getLocal(LOCAL_STORAGE_KEYS.ORDERS);
   const orderItems = getLocal(LOCAL_STORAGE_KEYS.ORDER_ITEMS);
   const sellers = getLocal(LOCAL_STORAGE_KEYS.SELLERS);
 
@@ -456,7 +454,7 @@ export async function getOrders() {
 
 export async function getOrdersBySeller(sellerId) {
   const allOrders = await getOrders();
-  return allOrders.filter(order => order.seller_id === sellerId && order.is_deleted !== true);
+  return allOrders.filter(order => order.seller_id === sellerId);
 }
 
 export async function updateOrderStatus(orderId, newStatus) {
@@ -474,7 +472,7 @@ export async function updateOrderStatus(orderId, newStatus) {
     }
   }
 
-  // SI PASA A 'enviado', SE CREA AUTOMÁTICAMENTE EN TABLA 'PedidoAdmin'
+  // SI PASA A 'enviado', SE CREA AUTOM├üTICAMENTE EN TABLA 'PedidoAdmin'
   if (newStatus === 'enviado' && targetOrder) {
     const existingAdminOrders = getLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDERS);
     const alreadyExists = existingAdminOrders.some(ao => ao.order_id === orderId);
@@ -530,90 +528,7 @@ export async function updateOrderStatus(orderId, newStatus) {
 }
 
 // ==========================================
-// X. LOG DE ACCIONES Y ELIMINACIÓN LÓGICA
-// ==========================================
-export async function logAction(userId, userRole, actionType, entityType, entityId, details = {}) {
-  if (isSupabaseConfigured) {
-    try {
-      await supabase.from('action_logs').insert([{
-        user_id: userId,
-        user_role: userRole,
-        action_type: actionType,
-        entity_type: entityType,
-        entity_id: entityId,
-        details: details
-      }]);
-    } catch (e) {
-      console.warn('Error guardando log:', e);
-    }
-  }
-}
-
-export async function softDeleteOrder(orderId, userId, userRole, entityType = 'ORDER') {
-  if (isSupabaseConfigured) {
-    const table = entityType === 'ADMIN_ORDER' ? 'admin_orders' : 'orders';
-    try {
-      await supabase.from(table).update({ is_deleted: true }).eq('id', orderId);
-      await logAction(userId, userRole, 'ELIMINAR', entityType, orderId, { message: 'Pedido eliminado visualmente' });
-    } catch (e) {
-      console.warn('Error eliminando pedido logicamente:', e);
-    }
-  }
-}
-
-export async function updateOrderItems(orderId, updatedItems) {
-  let newTotal = 0;
-  
-  // Local storage logic
-  const orderItems = getLocal(LOCAL_STORAGE_KEYS.ORDER_ITEMS);
-  const updatedLocalItems = orderItems.map(item => {
-    if (item.order_id === orderId) {
-      const match = updatedItems.find(ui => ui.id === item.id || ui.product_id === item.product_id);
-      if (match) {
-        const qty = Math.max(0, parseInt(match.adjusted_quantity || match.quantity, 10) || 0);
-        const subtotal = qty * Number(item.unit_price || 0);
-        newTotal += subtotal;
-        return { ...item, quantity: qty, subtotal };
-      } else {
-        newTotal += Number(item.subtotal || 0);
-      }
-    }
-    return item;
-  });
-  setLocal(LOCAL_STORAGE_KEYS.ORDER_ITEMS, updatedLocalItems);
-
-  const orders = getLocal(LOCAL_STORAGE_KEYS.ORDERS);
-  const updatedOrders = orders.map(o => o.id === orderId ? { ...o, total: newTotal } : o);
-  setLocal(LOCAL_STORAGE_KEYS.ORDERS, updatedOrders);
-
-  // Supabase logic
-  if (isSupabaseConfigured) {
-    try {
-      await supabase.from('orders').update({ total: newTotal }).eq('id', orderId);
-      for (const it of updatedItems) {
-        const qty = Math.max(0, parseInt(it.adjusted_quantity || it.quantity, 10) || 0);
-        await supabase.from('order_items').update({
-          quantity: qty,
-          subtotal: qty * Number(it.unit_price || 0)
-        }).eq('order_id', orderId).eq('product_id', it.product_id);
-      }
-      
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id || 'unknown';
-      await logAction(userId, 'seller', 'EDITAR', 'ORDER', orderId, {
-        message: 'Cantidades ajustadas por el vendedor',
-        items: updatedItems.map(i => ({ product_id: i.product_id, new_qty: i.adjusted_quantity || i.quantity }))
-      });
-    } catch (e) {
-      console.warn('Error Supabase updateOrderItems:', e);
-    }
-  }
-
-  return { success: true, newTotal };
-}
-
-// ==========================================
-// 6. ADMINISTRADOR DE PEDIDOS (admin_orders)
+// 6. PEDIDOS ADMIN (Tabla "PedidoAdmin")
 // ==========================================
 export async function getAdminOrders() {
   if (isSupabaseConfigured) {
@@ -629,19 +544,17 @@ export async function getAdminOrders() {
         .order('created_at', { ascending: false });
 
       if (!error && dbAdminOrders && dbAdminOrders.length > 0) {
-        return dbAdminOrders
-          .filter(ao => ao.is_deleted !== true)
-          .map(ao => ({
-            ...ao,
-            seller_name: ao.seller ? ao.seller.name : 'Venta Directa'
-          }));
+        return dbAdminOrders.map(ao => ({
+          ...ao,
+          seller_name: ao.seller ? ao.seller.name : 'Venta Directa'
+        }));
       }
     } catch (e) {
       console.warn('Fallback a pedidos admin locales:', e);
     }
   }
 
-  const adminOrders = getLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDERS).filter(ao => ao.is_deleted !== true);
+  const adminOrders = getLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDERS);
   const adminOrderItems = getLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDER_ITEMS);
   const sellers = getLocal(LOCAL_STORAGE_KEYS.SELLERS);
   const orders = getLocal(LOCAL_STORAGE_KEYS.ORDERS);
@@ -719,11 +632,6 @@ export async function updateAdminOrderItems(adminOrderId, updatedItems) {
     } catch (e) {
       console.warn('Error Supabase updateAdminOrderItems:', e);
     }
-    
-    await logAction('admin', 'admin', 'EDITAR', 'ADMIN_ORDER', adminOrderId, {
-      message: 'Cantidades ajustadas por el administrador',
-      items: updatedItems.map(i => ({ id: i.id, product_id: i.product_id, new_qty: i.adjusted_quantity }))
-    });
   }
 
   return { success: true, newTotal };
@@ -813,7 +721,7 @@ export async function getInvoices() {
 }
 
 // ==========================================
-// 8. CONFIGURACIÓN DE EMPRESA
+// 8. CONFIGURACI├ôN DE EMPRESA
 // ==========================================
 export async function getCompanySettings() {
   if (isSupabaseConfigured) {
@@ -828,7 +736,7 @@ export async function getCompanySettings() {
         return data.value;
       }
     } catch (e) {
-      console.warn('Fallback a configuración local:', e);
+      console.warn('Fallback a configuraci├│n local:', e);
     }
   }
   return getLocal(LOCAL_STORAGE_KEYS.SETTINGS) || initialCompanySettings;
@@ -847,3 +755,4 @@ export async function updateCompanySettings(newSettings) {
   }
   return newSettings;
 }
+

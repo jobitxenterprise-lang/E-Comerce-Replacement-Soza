@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import SellerNavbar from '../components/SellerNavbar';
 import SellerOrderCard from '../components/SellerOrderCard';
+import EditOrderItemsModal from '../../admin/components/EditOrderItemsModal';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import { useAuth } from '../../../shared/context/AuthContext';
 import { useToast } from '../../../shared/context/ToastContext';
-import { getOrdersBySeller, updateOrderStatus, getCompanySettings } from '../../../shared/services/dataService';
+import { getOrdersBySeller, updateOrderStatus, getCompanySettings, softDeleteOrder, updateOrderItems } from '../../../shared/services/dataService';
 import { formatWhatsAppMessage, generateWhatsAppUrl } from '../../../shared/services/whatsappService';
 import { ClipboardList, Search, CheckCircle2, Clock, Send, RefreshCw, Wrench } from 'lucide-react';
 
@@ -16,6 +17,7 @@ export default function SellerOrdersPage() {
   const [statusFilter, setStatusFilter] = useState('Pendientes');
   const [searchQuery, setSearchQuery] = useState('');
   const [companySettings, setCompanySettings] = useState(null);
+  const [editingOrder, setEditingOrder] = useState(null);
 
   useEffect(() => {
     if (currentSeller?.id) {
@@ -56,6 +58,28 @@ export default function SellerOrdersPage() {
       loadData();
     } catch (e) {
       error('Error al transferir pedido al admin: ' + e.message);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este pedido?')) return;
+    try {
+      await softDeleteOrder(orderId, currentSeller.id, 'seller', 'ORDER');
+      success('Pedido eliminado correctamente.');
+      loadData();
+    } catch (e) {
+      error('Error al eliminar: ' + e.message);
+    }
+  };
+
+  const handleSaveEdit = async (orderId, items) => {
+    try {
+      await updateOrderItems(orderId, items);
+      success('Pedido actualizado correctamente.');
+      setEditingOrder(null);
+      loadData();
+    } catch (e) {
+      error('Error al actualizar pedido: ' + e.message);
     }
   };
 
@@ -229,13 +253,33 @@ export default function SellerOrdersPage() {
                 order={order}
                 onMarkReceived={handleMarkReceived}
                 onOpenWhatsApp={handleSendWhatsAppDirectly}
+                onEdit={setEditingOrder}
+                onDelete={handleDeleteOrder}
               />
             ))}
           </div>
         )}
       </main>
 
-
+      {editingOrder && (
+        <EditOrderItemsModal
+          isOpen={true}
+          onClose={() => setEditingOrder(null)}
+          adminOrder={{
+            id: editingOrder.id,
+            client_name: editingOrder.client_name,
+            order_number: editingOrder.order_number,
+            items: editingOrder.items.map(i => ({
+              ...i,
+              original_quantity: i.quantity,
+              adjusted_quantity: i.quantity
+            }))
+          }}
+          onSave={async (orderId, items) => {
+            await handleSaveEdit(orderId, items);
+          }}
+        />
+      )}
     </div>
   );
 }
