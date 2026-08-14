@@ -186,10 +186,8 @@ export default function SellerHistoryPage() {
                         {order.order_number}
                       </td>
                       <td className="p-4">
-                        {new Date(order.order_date || order.created_at).toLocaleDateString('es-ES', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
+                        {new Date(order.order_date || order.created_at).toLocaleString('es-ES', {
+                          year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                         })}
                       </td>
                       <td className="p-4 font-bold text-slate-100">

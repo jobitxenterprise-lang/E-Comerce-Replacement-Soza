@@ -32,8 +32,8 @@ export function generateInvoicePDF({
   const companyAddress = company.address || 'De la Gasolinera Puma 2c al Norte, Matagalpa, Nicaragua';
 
   const formattedDate = date 
-    ? new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
-    : new Date().toLocaleDateString('es-ES');
+    ? new Date(date).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : new Date().toLocaleString('es-ES', { hour: '2-digit', minute: '2-digit' });
 
   const safeTotal = Number(total || 0);
 

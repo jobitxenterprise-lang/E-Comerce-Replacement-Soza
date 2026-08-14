@@ -11,7 +11,7 @@ export function exportOrdersToExcel(orders = [], filename = 'reporte_pedidos.xls
 
   const data = orders.map(order => ({
     'N° Pedido': order.order_number || '',
-    'Fecha': order.order_date || order.created_at ? new Date(order.order_date || order.created_at).toLocaleDateString('es-ES') : '',
+    'Fecha': order.order_date || order.created_at ? new Date(order.order_date || order.created_at).toLocaleString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '',
     'Cliente': order.client_name || '',
     'Vendedor': order.seller_name || order.seller?.name || 'N/A',
     'Origen': order.origin === 'vendedor' ? 'Vendedor Directo' : 'Público / Catálogo',
@@ -44,7 +44,7 @@ export function exportInvoicesToExcel(invoices = [], filename = 'reporte_factura
 
   const data = invoices.map(inv => ({
     'N° Factura': inv.invoice_number || '',
-    'Fecha Emisión': inv.invoice_date || inv.created_at ? new Date(inv.invoice_date || inv.created_at).toLocaleDateString('es-ES') : '',
+    'Fecha Emisión': inv.invoice_date || inv.created_at ? new Date(inv.invoice_date || inv.created_at).toLocaleString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '',
     'Cliente': inv.client_name || '',
     'Vendedor': inv.seller_name || 'Venta Directa',
     'Monto Total ($)': Number(inv.total_amount || 0).toFixed(2)

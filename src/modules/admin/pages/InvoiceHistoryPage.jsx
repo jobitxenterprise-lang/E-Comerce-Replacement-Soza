@@ -129,10 +129,8 @@ export default function InvoiceHistoryPage() {
                         {inv.invoice_number}
                       </td>
                       <td className="p-4 whitespace-nowrap">
-                        {new Date(inv.invoice_date || inv.created_at).toLocaleDateString('es-ES', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
+                        {new Date(inv.invoice_date || inv.created_at).toLocaleString('es-ES', {
+                          year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                         })}
                       </td>
                       <td className="p-4 font-bold text-slate-100">
