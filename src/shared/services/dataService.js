@@ -269,14 +269,23 @@ export async function authenticateSeller(usernameOrEmail, password) {
 
       if (!authErr && authData?.user) {
         const metadata = authData.user.user_metadata || {};
+        const extractedUsername = metadata.username || usernameOrEmail.split('@')[0].trim();
+        
+        // Buscar su ID real en la tabla sellers para que coincida con los pedidos
+        const { data: dbSeller } = await supabase
+          .from('sellers')
+          .select('*')
+          .ilike('username', extractedUsername)
+          .single();
+
         return {
           success: true,
           seller: {
-            id: authData.user.id,
+            id: dbSeller ? dbSeller.id : authData.user.id,
             email: authData.user.email,
-            name: metadata.name || usernameOrEmail,
-            username: metadata.username || usernameOrEmail,
-            zone: metadata.zone || 'Zona Centro - Norte',
+            name: dbSeller ? dbSeller.name : (metadata.name || usernameOrEmail),
+            username: dbSeller ? dbSeller.username : extractedUsername,
+            zone: dbSeller ? dbSeller.zone : (metadata.zone || 'Zona Centro - Norte'),
             role: 'seller'
           }
         };
