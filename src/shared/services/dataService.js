@@ -849,21 +849,29 @@ export async function updateAdminOrderStatus(adminOrderId, newStatus) {
 // 7. FACTURAS
 // ==========================================
 export async function getInvoices() {
+  const local = getLocal(LOCAL_STORAGE_KEYS.INVOICES) || [];
   if (isSupabaseConfigured) {
     try {
       const { data, error } = await supabase
         .from('invoices')
         .select('*')
         .order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) {
-        setLocal(LOCAL_STORAGE_KEYS.INVOICES, data);
-        return data;
+      if (!error && data) {
+        // Combinar facturas de supabase con las locales (por si alguna falló en subir)
+        const combined = [...data];
+        local.forEach(lInv => {
+          if (!combined.find(c => c.id === lInv.id)) {
+            combined.push(lInv);
+          }
+        });
+        setLocal(LOCAL_STORAGE_KEYS.INVOICES, combined);
+        return combined;
       }
     } catch (e) {
       console.warn('Fallback a facturas locales:', e);
     }
   }
-  return getLocal(LOCAL_STORAGE_KEYS.INVOICES);
+  return local;
 }
 
 // ==========================================
