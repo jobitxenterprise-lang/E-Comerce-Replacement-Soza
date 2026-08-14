@@ -566,20 +566,39 @@ export async function updateOrderItems(orderId, updatedItems) {
   
   // Local storage logic
   const orderItems = getLocal(LOCAL_STORAGE_KEYS.ORDER_ITEMS);
-  const updatedLocalItems = orderItems.map(item => {
-    if (item.order_id === orderId) {
-      const match = updatedItems.find(ui => ui.id === item.id || ui.product_id === item.product_id);
-      if (match) {
-        const qty = Math.max(0, parseInt(match.adjusted_quantity || match.quantity, 10) || 0);
-        const subtotal = qty * Number(item.unit_price || 0);
-        newTotal += subtotal;
-        return { ...item, quantity: qty, subtotal };
-      } else {
-        newTotal += Number(item.subtotal || 0);
-      }
+  const updatedLocalItems = [...orderItems];
+  
+  for (const ui of updatedItems) {
+    const existingIndex = updatedLocalItems.findIndex(item => item.order_id === orderId && (item.id === ui.id || item.product_id === ui.product_id));
+    const qty = Math.max(0, parseInt(ui.adjusted_quantity || ui.quantity, 10) || 0);
+    const subtotal = qty * Number(ui.unit_price || 0);
+    
+    if (existingIndex >= 0) {
+      updatedLocalItems[existingIndex] = { ...updatedLocalItems[existingIndex], quantity: qty, subtotal };
+      newTotal += subtotal;
+    } else {
+      updatedLocalItems.push({
+        id: 'item-' + crypto.randomUUID(),
+        order_id: orderId,
+        product_id: ui.product_id,
+        product_name: ui.product_name,
+        quantity: qty,
+        unit_price: ui.unit_price,
+        subtotal: subtotal,
+        created_at: new Date().toISOString()
+      });
+      newTotal += subtotal;
     }
-    return item;
+  }
+  
+  // Agregar al total los subtotales de los items originales que no se modificaron (por si acaso)
+  const modifiedProductIds = updatedItems.map(ui => ui.product_id);
+  orderItems.forEach(item => {
+    if (item.order_id === orderId && !modifiedProductIds.includes(item.product_id)) {
+      newTotal += Number(item.subtotal || 0);
+    }
   });
+
   setLocal(LOCAL_STORAGE_KEYS.ORDER_ITEMS, updatedLocalItems);
 
   const orders = getLocal(LOCAL_STORAGE_KEYS.ORDERS);
@@ -592,10 +611,21 @@ export async function updateOrderItems(orderId, updatedItems) {
       await supabase.from('orders').update({ total: newTotal }).eq('id', orderId);
       for (const it of updatedItems) {
         const qty = Math.max(0, parseInt(it.adjusted_quantity || it.quantity, 10) || 0);
-        await supabase.from('order_items').update({
-          quantity: qty,
-          subtotal: qty * Number(it.unit_price || 0)
-        }).eq('order_id', orderId).eq('product_id', it.product_id);
+        if (it.id && it.id.toString().startsWith('new-')) {
+          await supabase.from('order_items').insert([{
+            order_id: orderId,
+            product_id: it.product_id,
+            product_name: it.product_name || it.name,
+            quantity: qty,
+            unit_price: Number(it.unit_price || 0),
+            subtotal: qty * Number(it.unit_price || 0)
+          }]);
+        } else {
+          await supabase.from('order_items').update({
+            quantity: qty,
+            subtotal: qty * Number(it.unit_price || 0)
+          }).eq('order_id', orderId).eq('product_id', it.product_id);
+        }
       }
       
       const { data: userData } = await supabase.auth.getUser();
@@ -663,24 +693,37 @@ export async function getAdminOrders() {
 export async function updateAdminOrderItems(adminOrderId, updatedItems) {
   let newTotal = 0;
   const adminOrderItems = getLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDER_ITEMS);
+  const updatedAdminItems = [...adminOrderItems];
 
-  const updatedAdminItems = adminOrderItems.map(item => {
-    if (item.admin_order_id === adminOrderId) {
-      const match = updatedItems.find(ui => ui.id === item.id || ui.product_id === item.product_id);
-      if (match) {
-        const adjustedQty = Math.max(0, parseInt(match.adjusted_quantity, 10) || 0);
-        const subtotal = adjustedQty * Number(item.unit_price || 0);
-        newTotal += subtotal;
-        return {
-          ...item,
-          adjusted_quantity: adjustedQty,
-          subtotal: subtotal
-        };
-      } else {
-        newTotal += Number(item.subtotal || 0);
-      }
+  for (const ui of updatedItems) {
+    const existingIndex = updatedAdminItems.findIndex(item => item.admin_order_id === adminOrderId && (item.id === ui.id || item.product_id === ui.product_id));
+    const qty = Math.max(0, parseInt(ui.adjusted_quantity, 10) || 0);
+    const subtotal = qty * Number(ui.unit_price || 0);
+    
+    if (existingIndex >= 0) {
+      updatedAdminItems[existingIndex] = { ...updatedAdminItems[existingIndex], adjusted_quantity: qty, subtotal };
+      newTotal += subtotal;
+    } else {
+      updatedAdminItems.push({
+        id: 'admin-item-' + crypto.randomUUID(),
+        admin_order_id: adminOrderId,
+        product_id: ui.product_id,
+        product_name: ui.product_name,
+        original_quantity: 0,
+        adjusted_quantity: qty,
+        unit_price: ui.unit_price,
+        subtotal: subtotal,
+        created_at: new Date().toISOString()
+      });
+      newTotal += subtotal;
     }
-    return item;
+  }
+
+  const modifiedProductIds = updatedItems.map(ui => ui.product_id);
+  adminOrderItems.forEach(item => {
+    if (item.admin_order_id === adminOrderId && !modifiedProductIds.includes(item.product_id)) {
+      newTotal += Number(item.subtotal || 0);
+    }
   });
 
   setLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDER_ITEMS, updatedAdminItems);
@@ -707,14 +750,25 @@ export async function updateAdminOrderItems(adminOrderId, updatedItems) {
         .eq('id', adminOrderId);
 
       for (const it of updatedItems) {
-        await supabase
-          .from('admin_order_items')
-          .update({
-            adjusted_quantity: it.adjusted_quantity,
-            subtotal: it.adjusted_quantity * Number(it.unit_price || 0)
+        const qty = Math.max(0, parseInt(it.adjusted_quantity, 10) || 0);
+        if (it.id && it.id.toString().startsWith('new-')) {
+          await supabase.from('admin_order_items').insert([{
+            admin_order_id: adminOrderId,
+            product_id: it.product_id,
+            product_name: it.product_name || it.name,
+            original_quantity: 0,
+            adjusted_quantity: qty,
+            unit_price: Number(it.unit_price || 0),
+            subtotal: qty * Number(it.unit_price || 0)
+          }]);
+        } else {
+          await supabase.from('admin_order_items').update({
+            adjusted_quantity: qty,
+            subtotal: qty * Number(it.unit_price || 0)
           })
           .eq('admin_order_id', adminOrderId)
           .eq('product_id', it.product_id);
+        }
       }
     } catch (e) {
       console.warn('Error Supabase updateAdminOrderItems:', e);
