@@ -84,7 +84,7 @@ export default function AddProductPage() {
         success(`Nuevo repuesto "${values.name}" agregado al catálogo.`);
       }
       resetForm();
-      loadProducts();
+      loadData();
     } catch (err) {
       error('Error al guardar producto: ' + err.message);
     } finally {
