@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import SellerNavbar from '../components/SellerNavbar';
 import SellerOrderCard from '../components/SellerOrderCard';
-import WhatsAppPreviewModal from '../components/WhatsAppPreviewModal';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import { useAuth } from '../../../shared/context/AuthContext';
 import { useToast } from '../../../shared/context/ToastContext';
 import { getOrdersBySeller, updateOrderStatus, getCompanySettings } from '../../../shared/services/dataService';
+import { formatWhatsAppMessage, generateWhatsAppUrl } from '../../../shared/services/whatsappService';
 import { ClipboardList, Search, CheckCircle2, Clock, Send, RefreshCw, Wrench } from 'lucide-react';
 
 export default function SellerOrdersPage() {
@@ -15,7 +15,6 @@ export default function SellerOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('Pendientes');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedOrderForWhatsApp, setSelectedOrderForWhatsApp] = useState(null);
   const [companySettings, setCompanySettings] = useState(null);
 
   useEffect(() => {
@@ -57,6 +56,29 @@ export default function SellerOrdersPage() {
       loadData();
     } catch (e) {
       error('Error al transferir pedido al admin: ' + e.message);
+    }
+  };
+
+  const handleSendWhatsAppDirectly = async (order) => {
+    try {
+      const msg = formatWhatsAppMessage({
+        orderNumber: order.order_number,
+        clientName: order.client_name,
+        sellerName: order.seller?.name || currentSeller?.name || 'Vendedor',
+        date: order.order_date || order.created_at,
+        items: order.items || [],
+        total: order.total,
+        notes: order.notes
+      });
+      const phone = companySettings?.whatsapp_company || import.meta.env.VITE_WHATSAPP_NUMBER;
+      const url = generateWhatsAppUrl(phone, msg);
+      
+      window.open(url, '_blank');
+      
+      // Pasar el pedido a enviado automáticamente
+      await handleConfirmSent(order.id);
+    } catch (e) {
+      error('Error al enviar por WhatsApp: ' + e.message);
     }
   };
 
@@ -206,21 +228,14 @@ export default function SellerOrdersPage() {
                 key={order.id}
                 order={order}
                 onMarkReceived={handleMarkReceived}
-                onOpenWhatsApp={(ord) => setSelectedOrderForWhatsApp(ord)}
+                onOpenWhatsApp={handleSendWhatsAppDirectly}
               />
             ))}
           </div>
         )}
       </main>
 
-      {/* Modal WhatsApp Preview */}
-      <WhatsAppPreviewModal
-        isOpen={Boolean(selectedOrderForWhatsApp)}
-        onClose={() => setSelectedOrderForWhatsApp(null)}
-        order={selectedOrderForWhatsApp}
-        companyPhone={companySettings?.whatsapp_company || import.meta.env.VITE_WHATSAPP_NUMBER}
-        onConfirmSent={handleConfirmSent}
-      />
+
     </div>
   );
 }
