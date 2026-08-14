@@ -1,9 +1,9 @@
 -- ==============================================================================
 -- SCHEMA SQL COMPLETO: REPUESTOS SOZA — MATAGALPA, NICARAGUA
 -- Compatible con Supabase PostgreSQL
--- Incluye: 5 Categorías Oficiales, Repuestos de Motos, Vendedores, Administradores,
---          Pedidos (Vendedor/Público), Pedidos Admin (Edición cantidades), Detalle,
---          Facturas, Configuración, Funciones RPC, RLS y Datos Semilla Oficiales.
+-- Incluye: 5 Categorías Oficiales, Estructura de Tablas, Vendedores, Administradores,
+--          Pedidos (Vendedor/Público), Pedidos Admin, Detalle, Facturas,
+--          Funciones RPC y Políticas RLS. (Sin productos demo).
 -- ==============================================================================
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS public.company_settings (
 );
 
 -- ------------------------------------------------------------------------------
--- 2. TABLA DE CATEGORÍAS DE PRODUCTOS
+-- 2. TABLA DE CATEGORÍAS DE PRODUCTOS (5 CATEGORÍAS)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.categories (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -198,7 +198,7 @@ CREATE POLICY "Permitir todo en admin_order_items" ON public.admin_order_items F
 CREATE POLICY "Permitir todo en invoices" ON public.invoices FOR ALL USING (true) WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------
--- 13. DATOS SEMILLA (SEED DATA)
+-- 13. DATOS SEMILLA OFICIALES (Configuración, 5 Categorías, Admins, Vendedores)
 -- ------------------------------------------------------------------------------
 
 INSERT INTO public.company_settings (key, value)
@@ -244,117 +244,3 @@ VALUES
   ('sel-0003', 'Mateo Morales', 'mateom', 'vendedor123', '+505 8123-4567', true),
   ('sel-0004', 'Sofía Castillo', 'sofiac', 'vendedor123', '+505 8990-2345', true)
 ON CONFLICT (username) DO NOTHING;
-
-INSERT INTO public.products (id, name, description, category, price, cost_price, stock, image_url, active)
-VALUES
-  (
-    'prod-0001',
-    'Kit de Cilindro y Pistón EVERESTT Motor Tech 150cc OEM',
-    'Kit completo de reparación de motor con cilindro rectificado de alta resistencia térmica, pistón reforzado, aros japoneses y empaquetadura completa.',
-    'Motor',
-    58.00,
-    36.00,
-    18,
-    'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0002',
-    'Carburador Racing KIGCOL PE28 con Cortina Plana',
-    'Carburador de alto desempeño para motos 150cc a 250cc. Respuesta instantánea al acelerador, fácil calibración y óptimo flujo de mezcla combustible.',
-    'Motor',
-    46.00,
-    29.00,
-    14,
-    'https://images.unsplash.com/photo-1580983218765-f663bec07b37?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0003',
-    'Kit de Arrastre Reforzado KIGCOL 428H (Catalina + Piñón + Cadena)',
-    'Kit de tracción con tratamiento térmico endurecido para máxima durabilidad, piñón y catalina de acero al carbono 1045 con cadena dorada de alta resistencia.',
-    'Transmisión y Clutch',
-    34.00,
-    21.00,
-    25,
-    'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0004',
-    'Pastillas de Freno Cerámicas EVERESTT Racing Delanteras',
-    'Juego de pastillas de compuesto sinterizado cerámico con disipación térmica rápida, frenado firme sin ruidos y mínimo desgaste del disco.',
-    'Frenos y Suspensión',
-    12.00,
-    6.50,
-    35,
-    'https://images.unsplash.com/photo-1600705722908-bab1e61c0b4d?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0005',
-    'Juego de Amortiguadores Traseros Hidráulicos KIGCOL Pro Gas',
-    'Par de amortiguadores reforzados con precarga de resorte regulable y botella de nitrógeno para absorción suave en caminos difíciles y carga pesada.',
-    'Frenos y Suspensión',
-    52.00,
-    33.00,
-    12,
-    'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0006',
-    'Llanta Deportiva TRX Tires 130/70-17 TL',
-    'Llanta para moto deportiva con compuesto de alta tracción y agarre superior en curvas tanto en asfalto seco como mojado. Marca TRX Tires original.',
-    'Frenos y Suspensión',
-    68.00,
-    44.00,
-    24,
-    'https://images.unsplash.com/photo-1578844251758-2f71da64c96f?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0007',
-    'Batería de Gel TRX Power 12V 9Ah Sellada',
-    'Batería de gel libre de mantenimiento con alta potencia de arranque en frío (CCA), resistencia extrema a vibraciones y tecnología TRX Energy & Traction.',
-    'Eléctrico',
-    42.00,
-    26.00,
-    30,
-    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0008',
-    'Foco Farola Delantera LED Cree H4 12V 8000LM Alta Potencia',
-    'Bombillo LED con lupa bifocal y disipador de aluminio aeronáutico. Luz blanca fría ultrabrillante y corte de luz antideslumbrante para conducción nocturna segura.',
-    'Eléctrico',
-    18.00,
-    9.50,
-    40,
-    'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0009',
-    'Casco Integral X-SPORS Carbon Racing Pro',
-    'Casco con certificación DOT y ECE 22.06, visor antirrayaduras con preparación Pinlock, ventilación aerodinámica de alto flujo y diseño rojo/negro deportivo.',
-    'Carrocería y Accesorios',
-    115.00,
-    78.00,
-    15,
-    'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=600&auto=format&fit=crop&q=80',
-    true
-  ),
-  (
-    'prod-0010',
-    'Aceite Sintético Motul 7100 4T 10W-40 1 Litro',
-    'Lubricante 100% sintético con tecnología Éster para motores de 4 tiempos de alto rendimiento. Protección extrema a altas revoluciones y cambios suaves.',
-    'Motor',
-    19.50,
-    13.00,
-    50,
-    'https://images.unsplash.com/photo-1635773054018-22c7a36c53ce?w=600&auto=format&fit=crop&q=80',
-    true
-  )
-ON CONFLICT (id) DO NOTHING;
