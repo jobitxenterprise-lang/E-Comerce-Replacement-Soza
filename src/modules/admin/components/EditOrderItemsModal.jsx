@@ -131,7 +131,6 @@ export default function EditOrderItemsModal({
       isOpen={isOpen}
       onClose={onClose}
       title={`Editando Pedido ${adminOrder.order_number}`}
-      subtitle="Busca en el catálogo para añadir nuevos productos o ajusta las cantidades actuales. Haz clic en la papelera para eliminar productos del pedido."
       maxWidth="max-w-[95vw] lg:max-w-6xl xl:max-w-7xl"
     >
       <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 font-sport h-[80vh] overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0">
