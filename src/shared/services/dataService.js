@@ -132,15 +132,15 @@ export async function uploadProductImage(file) {
   const filePath = `${fileName}`;
 
   const { error: uploadError } = await supabase.storage
-    .from('product-images')
+    .from('public-imagen')
     .upload(filePath, file);
 
   if (uploadError) {
-    throw new Error(`Error al subir imagen: ${uploadError.message}. Asegúrate de crear el bucket "product-images" público.`);
+    throw new Error(`Error al subir imagen: ${uploadError.message}. Asegúrate de crear el bucket "public-imagen" público.`);
   }
 
   const { data } = supabase.storage
-    .from('product-images')
+    .from('public-imagen')
     .getPublicUrl(filePath);
 
   return data.publicUrl;

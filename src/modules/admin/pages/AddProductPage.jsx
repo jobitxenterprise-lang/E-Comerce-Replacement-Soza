@@ -259,7 +259,7 @@ export default function AddProductPage() {
                   </div>
                 </div>
                 <span className="text-xs text-slate-500">
-                  Puedes pegar un enlace directo o subir una imagen. (Requiere bucket "product-images" público en Supabase).
+                  Puedes pegar un enlace directo o subir una imagen. (Requiere bucket "public-imagen" público en Supabase).
                 </span>
               </div>
 
