@@ -137,7 +137,7 @@ export default function EditOrderItemsModal({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 font-sport h-[80vh] overflow-hidden">
         
         {/* Columna Izquierda: Catálogo Completo */}
-        <div className="lg:col-span-8 xl:col-span-8 flex flex-col h-full bg-[#0b1528] rounded-2xl border border-slate-800 p-4">
+        <div className="lg:col-span-8 xl:col-span-8 flex flex-col min-h-0 h-full bg-[#0b1528] rounded-2xl border border-slate-800 p-4">
           <div className="mb-4 space-y-4">
             <h3 className="text-sm font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
               <ShoppingBag className="w-4 h-4" />
@@ -184,7 +184,7 @@ export default function EditOrderItemsModal({
         </div>
 
         {/* Columna Derecha: Resumen del Pedido */}
-        <div className="lg:col-span-4 xl:col-span-4 flex flex-col h-full">
+        <div className="lg:col-span-4 xl:col-span-4 flex flex-col min-h-0 h-full">
           <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar mb-4">
             {items.length === 0 ? (
               <div className="text-center py-10 text-slate-400 text-sm border border-dashed border-slate-700 rounded-2xl">
