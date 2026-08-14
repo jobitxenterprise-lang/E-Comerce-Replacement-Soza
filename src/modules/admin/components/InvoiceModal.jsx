@@ -38,10 +38,12 @@ export default function InvoiceModal({ isOpen, onClose, invoice }) {
   };
 
   const formattedDate = invoice.invoice_date || invoice.created_at
-    ? new Date(invoice.invoice_date || invoice.created_at).toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
+    ? new Date(invoice.invoice_date || invoice.created_at).toLocaleString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       })
     : '';
 

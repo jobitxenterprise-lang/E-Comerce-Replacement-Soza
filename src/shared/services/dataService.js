@@ -890,7 +890,7 @@ export async function getInvoices() {
 
         const fallbackInvoice = {
           id: 'inv-sync-' + order.id,
-          invoice_number: `FAC-SOZA-${order.order_number.replace('SZ-MOTO-', '')}`,
+          invoice_number: `FAC-SOZA-${order.order_number.replace('SZ-', '')}`,
           admin_order_id: order.id,
           order_number: order.order_number,
           client_name: order.client_name,
