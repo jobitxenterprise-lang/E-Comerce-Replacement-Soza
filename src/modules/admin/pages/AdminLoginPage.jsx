@@ -117,14 +117,7 @@ export default function AdminLoginPage() {
         </Formik>
 
         {/* Demo info */}
-        <div className="mt-8 pt-5 border-t border-slate-800 text-center font-sport">
-          <p className="text-[11px] text-slate-400 font-semibold">
-            Credenciales de administrador por defecto:
-          </p>
-          <div className="mt-1.5 bg-[#080d18] p-2.5 rounded-xl border border-slate-800 text-[11px] font-mono text-slate-300">
-            <span>Usuario: <strong className="text-cyan-400">admin</strong></span> | <span>Clave: <strong className="text-cyan-400">admin123</strong></span>
-          </div>
-        </div>
+       
       </motion.div>
     </div>
   );

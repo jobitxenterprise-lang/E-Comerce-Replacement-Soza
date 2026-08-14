@@ -108,19 +108,9 @@ export default function SellerLoginPage() {
         </Formik>
 
         {/* Seed Info */}
-        <div className="mt-8 pt-5 border-t border-slate-800 text-center font-sport">
-          <p className="text-[11px] text-slate-400 font-semibold mb-2">
-            Vendedores activos de prueba (Clave: <code className="text-cyan-400 font-mono">vendedor123</code>):
-          </p>
-          <div className="flex flex-wrap justify-center gap-1.5 text-[11px] text-slate-300">
-            <span className="bg-slate-900 px-2 py-0.5 rounded border border-slate-700 font-mono">carlosm</span>
-            <span className="bg-slate-900 px-2 py-0.5 rounded border border-slate-700 font-mono">valeriag</span>
-            <span className="bg-slate-900 px-2 py-0.5 rounded border border-slate-700 font-mono">mateom</span>
-            <span className="bg-slate-900 px-2 py-0.5 rounded border border-slate-700 font-mono">sofiac</span>
-          </div>
-        </div>
+      
 
-        {/* Acceso Admin */}
+        {/* Acceso Admin
         <div className="mt-5 text-center">
           <Link
             to="/login-admin"
@@ -129,7 +119,8 @@ export default function SellerLoginPage() {
             <ShieldCheck className="w-3.5 h-3.5" />
             Acceso a Administración General
           </Link>
-        </div>
+        </div> */}
+        
       </motion.div>
     </div>
   );
