@@ -23,13 +23,14 @@ export const initialAdmins = [
   }
 ];
 
+// Los 3 Asesores de Ventas Oficiales con sus Zonas
 export const initialSellers = [
   {
     id: 'sel-0001',
     name: 'Carlos Mendoza',
     username: 'carlosm',
     password: 'vendedor123',
-    phone: '+505 8899-1122',
+    zone: 'Zona Centro - Norte',
     active: true
   },
   {
@@ -37,7 +38,7 @@ export const initialSellers = [
     name: 'Valeria Gómez',
     username: 'valeriag',
     password: 'vendedor123',
-    phone: '+505 8765-4321',
+    zone: 'Zona Occidente',
     active: true
   },
   {
@@ -45,15 +46,7 @@ export const initialSellers = [
     name: 'Mateo Morales',
     username: 'mateom',
     password: 'vendedor123',
-    phone: '+505 8123-4567',
-    active: true
-  },
-  {
-    id: 'sel-0004',
-    name: 'Sofía Castillo',
-    username: 'sofiac',
-    password: 'vendedor123',
-    phone: '+505 8990-2345',
+    zone: 'Zona Sur',
     active: true
   }
 ];

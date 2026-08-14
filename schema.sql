@@ -1,9 +1,9 @@
 -- ==============================================================================
 -- SCHEMA SQL COMPLETO: REPUESTOS SOZA — MATAGALPA, NICARAGUA
 -- Compatible con Supabase PostgreSQL
--- Incluye: 5 Categorías Oficiales, Estructura de Tablas, Vendedores, Administradores,
+-- Incluye: 5 Categorías Oficiales, 3 Vendedores con Zonas Asignadas,
 --          Pedidos (Vendedor/Público), Pedidos Admin, Detalle, Facturas,
---          Funciones RPC y Políticas RLS. (Sin productos demo).
+--          Funciones RPC y Políticas RLS. (Catálogo limpio listo para subir productos).
 -- ==============================================================================
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS public.company_settings (
 );
 
 -- ------------------------------------------------------------------------------
--- 2. TABLA DE CATEGORÍAS DE PRODUCTOS (5 CATEGORÍAS)
+-- 2. TABLA DE CATEGORÍAS DE PRODUCTOS (5 CATEGORÍAS OFICIALES)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.categories (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -47,32 +47,20 @@ CREATE TABLE IF NOT EXISTS public.products (
 );
 
 -- ------------------------------------------------------------------------------
--- 4. TABLA DE VENDEDORES
+-- 4. TABLA DE VENDEDORES (3 ASESORES CON SUS ZONAS ASIGNADAS)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.sellers (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   name TEXT NOT NULL,
   username TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL,
-  phone TEXT,
+  zone TEXT NOT NULL DEFAULT 'Zona Centro - Norte',
   active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ------------------------------------------------------------------------------
--- 5. TABLA DE ADMINISTRADORES
--- ------------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.admins (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  username TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
-  email TEXT UNIQUE NOT NULL,
-  name TEXT NOT NULL DEFAULT 'Administrador General',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ------------------------------------------------------------------------------
--- 6. TABLA DE PEDIDOS (Manejada por Público / Vendedor)
+-- 5. TABLA DE PEDIDOS (Manejada por Público / Vendedor)
 -- Estados: 'pendiente_recibido', 'recibido', 'enviado'
 -- Origen: 'publico', 'vendedor'
 -- ------------------------------------------------------------------------------
@@ -90,7 +78,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
 );
 
 -- ------------------------------------------------------------------------------
--- 7. TABLA DE DETALLE DE PEDIDOS (Order Items)
+-- 6. TABLA DE DETALLE DE PEDIDOS (Order Items)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.order_items (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -104,7 +92,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
 );
 
 -- ------------------------------------------------------------------------------
--- 8. TABLA DE GESTIÓN DEL ADMIN (PedidoAdmin)
+-- 7. TABLA DE GESTIÓN DEL ADMIN (PedidoAdmin)
 -- Creada automáticamente cuando el vendedor pasa el pedido a 'enviado'
 -- Estados: 'pendiente', 'facturado', 'cancelado'
 -- ------------------------------------------------------------------------------
@@ -123,7 +111,7 @@ CREATE TABLE IF NOT EXISTS public.admin_orders (
 );
 
 -- ------------------------------------------------------------------------------
--- 9. TABLA DE DETALLE DE PEDIDO ADMIN (DetallePedidoAdmin)
+-- 8. TABLA DE DETALLE DE PEDIDO ADMIN (DetallePedidoAdmin)
 -- Permite editar cantidades ajustadas sin alterar el pedido original del vendedor
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.admin_order_items (
@@ -139,7 +127,7 @@ CREATE TABLE IF NOT EXISTS public.admin_order_items (
 );
 
 -- ------------------------------------------------------------------------------
--- 10. TABLA DE FACTURAS
+-- 9. TABLA DE FACTURAS
 -- Generada automáticamente cuando el admin marca PedidoAdmin como 'facturado'
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.invoices (
@@ -158,7 +146,7 @@ CREATE TABLE IF NOT EXISTS public.invoices (
 );
 
 -- ------------------------------------------------------------------------------
--- 11. FUNCIONES RPC
+-- 10. FUNCIONES RPC
 -- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.decrease_product_stock(
   p_product_id TEXT,
@@ -173,13 +161,12 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ------------------------------------------------------------------------------
--- 12. HABILITAR RLS Y PERMISOS DE ACCESO
+-- 11. HABILITAR RLS Y PERMISOS DE ACCESO
 -- ------------------------------------------------------------------------------
 ALTER TABLE public.company_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sellers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_orders ENABLE ROW LEVEL SECURITY;
@@ -190,7 +177,6 @@ CREATE POLICY "Permitir todo en company_settings" ON public.company_settings FOR
 CREATE POLICY "Permitir todo en categories" ON public.categories FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo en products" ON public.products FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo en sellers" ON public.sellers FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Permitir todo en admins" ON public.admins FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo en orders" ON public.orders FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo en order_items" ON public.order_items FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo en admin_orders" ON public.admin_orders FOR ALL USING (true) WITH CHECK (true);
@@ -198,7 +184,7 @@ CREATE POLICY "Permitir todo en admin_order_items" ON public.admin_order_items F
 CREATE POLICY "Permitir todo en invoices" ON public.invoices FOR ALL USING (true) WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------
--- 13. DATOS SEMILLA OFICIALES (Configuración, 5 Categorías, Admins, Vendedores)
+-- 12. DATOS SEMILLA OFICIALES (Configuración, 5 Categorías, 3 Vendedores con Zona)
 -- ------------------------------------------------------------------------------
 
 INSERT INTO public.company_settings (key, value)
@@ -228,19 +214,10 @@ VALUES
   ('cat-0005', 'Carrocería y Accesorios', 'Cascos certificados, retrovisores, manubrios, sliders y accesorios de protección', true)
 ON CONFLICT (name) DO NOTHING;
 
-INSERT INTO public.admins (id, username, password, email, name)
-VALUES (
-  'adm-0001',
-  'admin',
-  'admin123',
-  'admin@repuestosoza.com',
-  'Administrador SOZA'
-) ON CONFLICT (username) DO NOTHING;
-
-INSERT INTO public.sellers (id, name, username, password, phone, active)
+-- LOS 3 ASESORES DE VENTAS CON SUS ZONAS
+INSERT INTO public.sellers (id, name, username, password, zone, active)
 VALUES 
-  ('sel-0001', 'Carlos Mendoza', 'carlosm', 'vendedor123', '+505 8899-1122', true),
-  ('sel-0002', 'Valeria Gómez', 'valeriag', 'vendedor123', '+505 8765-4321', true),
-  ('sel-0003', 'Mateo Morales', 'mateom', 'vendedor123', '+505 8123-4567', true),
-  ('sel-0004', 'Sofía Castillo', 'sofiac', 'vendedor123', '+505 8990-2345', true)
+  ('sel-0001', 'Carlos Mendoza', 'carlosm', 'vendedor123', 'Zona Centro - Norte', true),
+  ('sel-0002', 'Valeria Gómez', 'valeriag', 'vendedor123', 'Zona Occidente', true),
+  ('sel-0003', 'Mateo Morales', 'mateom', 'vendedor123', 'Zona Sur', true)
 ON CONFLICT (username) DO NOTHING;

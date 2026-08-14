@@ -38,7 +38,7 @@ export default function CheckoutModal({ isOpen, onClose, defaultSellerId = '', i
 
   const sellerOptions = sellers.map(s => ({
     value: s.id,
-    label: `${s.name} (${s.phone || 'Asesor SOZA'})`
+    label: `${s.name} (${s.zone || 'Zona General'})`
   }));
 
   const initialValues = {
