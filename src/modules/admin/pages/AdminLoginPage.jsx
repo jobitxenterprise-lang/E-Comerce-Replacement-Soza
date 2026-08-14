@@ -8,7 +8,7 @@ import { useAuth } from '../../../shared/context/AuthContext';
 import { useToast } from '../../../shared/context/ToastContext';
 import { ShieldCheck, Lock, User, ArrowLeft, KeyRound, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
-
+import logo from "../../public/Imagenes/logomoto.png"
 export default function AdminLoginPage() {
   const { loginAdmin } = useAuth();
   const { success, error } = useToast();
@@ -53,9 +53,7 @@ export default function AdminLoginPage() {
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-red-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-cyan-500/20">
-            <ShieldCheck className="w-9 h-9 text-white" />
-          </div>
+           <img src={logo} alt="" />
           <h2 className="text-2xl font-bold font-racing text-slate-100">
             REPUESTOS SOZA
           </h2>

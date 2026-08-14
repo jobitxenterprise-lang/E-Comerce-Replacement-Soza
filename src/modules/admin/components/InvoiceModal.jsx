@@ -63,7 +63,7 @@ export default function InvoiceModal({ isOpen, onClose, invoice }) {
                   {company.company_name || 'REPUESTOS SOZA'}
                 </h2>
                 <p className="text-[11px] text-slate-500 uppercase tracking-wider">
-                  {company.city || 'Matagalpa, Nicaragua'} • DISTRIBUIDOR DE REPUESTOS Y MOTOS
+                  {company.city || 'Matagalpa, Nicaragua'} • DISTRIBUIDOR DE REPUESTOS DE MOTOS
                 </p>
               </div>
             </div>
