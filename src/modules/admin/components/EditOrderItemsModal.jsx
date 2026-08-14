@@ -84,7 +84,7 @@ export default function EditOrderItemsModal({
                 </span>
                 <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
                   <span>Cant. Original Vendedor: <strong className="text-slate-200 font-mono">{item.original_quantity || item.quantity || 1}</strong></span>
-                  <span>Precio Unit: <strong className="text-cyan-400 font-mono">${Number(item.unit_price || 0).toFixed(2)}</strong></span>
+                  <span>Precio Unit: <strong className="text-cyan-400 font-mono">C${Number(item.unit_price || 0).toFixed(2)}</strong></span>
                 </div>
               </div>
 
@@ -119,7 +119,7 @@ export default function EditOrderItemsModal({
                 <div className="text-right min-w-[70px]">
                   <span className="text-[10px] uppercase text-slate-500 font-bold block">Subtotal</span>
                   <span className="text-sm font-black text-cyan-400 font-mono">
-                    ${(Number(item.adjusted_quantity || 0) * Number(item.unit_price || 0)).toFixed(2)}
+                    C${(Number(item.adjusted_quantity || 0) * Number(item.unit_price || 0)).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -132,14 +132,14 @@ export default function EditOrderItemsModal({
           <div>
             <span className="text-xs text-slate-400 block font-sport">Total Original Pedido:</span>
             <span className="text-sm font-semibold text-slate-400 line-through font-mono">
-              ${Number(adminOrder.adjusted_total || 0).toFixed(2)}
+              C${Number(adminOrder.adjusted_total || 0).toFixed(2)}
             </span>
           </div>
 
           <div className="text-right">
             <span className="text-xs text-cyan-400 font-bold block uppercase tracking-wider font-sport">Total Ajustado Final:</span>
             <span className="text-2xl font-black text-cyan-400 font-mono">
-              ${calculatedTotal.toFixed(2)} USD
+              C${calculatedTotal.toFixed(2)}
             </span>
           </div>
         </div>

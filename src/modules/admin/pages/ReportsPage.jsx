@@ -117,7 +117,7 @@ export default function ReportsPage() {
             <DollarSign className="w-5 h-5 text-cyan-400" />
           </div>
           <p className="text-3xl sm:text-4xl font-black text-cyan-400 font-mono">
-            ${totalBilled.toFixed(2)}
+            C${totalBilled.toFixed(2)}
           </p>
           <span className="text-xs text-slate-400 block mt-1">
             Ingresos netos por ventas liquidadas
@@ -177,7 +177,7 @@ export default function ReportsPage() {
                     <th className="p-4">Fecha</th>
                     <th className="p-4">Cliente</th>
                     <th className="p-4">Vendedor</th>
-                    <th className="p-4 text-right">Total Facturado ($)</th>
+                    <th className="p-4 text-right">Total Facturado (C$)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -196,7 +196,7 @@ export default function ReportsPage() {
                         {inv.seller_name || 'Venta Directa'}
                       </td>
                       <td className="p-4 text-right font-black text-cyan-400 font-mono text-sm">
-                        ${Number(inv.total_amount || 0).toFixed(2)}
+                        C${Number(inv.total_amount || 0).toFixed(2)}
                       </td>
                     </tr>
                   ))}

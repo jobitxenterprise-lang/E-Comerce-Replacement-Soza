@@ -135,10 +135,10 @@ export default function InvoiceModal({ isOpen, onClose, invoice }) {
                   <tr key={idx} className="hover:bg-slate-50">
                     <td className="py-2 px-3 font-mono text-slate-400">{idx + 1}</td>
                     <td className="py-2 px-3 font-medium text-slate-900">{item.product_name || item.name}</td>
-                    <td className="py-2 px-3 text-right font-mono">${Number(item.unit_price || 0).toFixed(2)}</td>
+                    <td className="py-2 px-3 text-right font-mono">C${Number(item.unit_price || 0).toFixed(2)}</td>
                     <td className="py-2 px-3 text-center font-mono font-bold text-slate-900">{item.adjusted_quantity || item.quantity || 1}</td>
                     <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
-                      ${Number(item.subtotal || ((item.adjusted_quantity || item.quantity || 1) * (item.unit_price || 0))).toFixed(2)}
+                      C${Number(item.subtotal || ((item.adjusted_quantity || item.quantity || 1) * (item.unit_price || 0))).toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -157,16 +157,16 @@ export default function InvoiceModal({ isOpen, onClose, invoice }) {
             <div className="w-full sm:w-64 space-y-1 text-xs text-right">
               <div className="flex justify-between text-slate-600">
                 <span>SUBTOTAL:</span>
-                <span className="font-mono font-bold">${Number(invoice.total_amount || 0).toFixed(2)}</span>
+                <span className="font-mono font-bold">C${Number(invoice.total_amount || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>DESCUENTO (0%):</span>
-                <span className="font-mono">$0.00</span>
+                <span className="font-mono">C$0.00</span>
               </div>
               <div className="flex justify-between items-baseline pt-2 border-t border-slate-200">
                 <span className="font-bold text-slate-900 text-xs">TOTAL FACTURA:</span>
                 <span className="text-2xl font-black text-slate-900 font-mono">
-                  ${Number(invoice.total_amount || 0).toFixed(2)} USD
+                  C${Number(invoice.total_amount || 0).toFixed(2)}
                 </span>
               </div>
             </div>

@@ -45,15 +45,11 @@ export default function ProductDetailModal({ product, isOpen, onClose, onDirectC
     >
       <div className="space-y-5 font-sport">
         
-        {/* Precio y Stock 
+        {/* Precio y Stock */}
         <div className="bg-[#080d18] p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">
-              Precio Unitario
-            </span>
-            <span className="text-2xl sm:text-3xl font-black text-cyan-400 font-mono">
-              ${unitPrice.toFixed(2)}
-            </span>
+            <span className="text-[10px] uppercase text-cyan-400 font-bold tracking-widest block mb-1">Precio Unitario</span>
+            <span className="text-3xl font-black text-white font-mono">C${Number(product.price || 0).toFixed(2)}</span>
           </div>
 
           <div className="text-right">
@@ -68,11 +64,14 @@ export default function ProductDetailModal({ product, isOpen, onClose, onDirectC
               </span>
             )}
           </div>
-        </div>*/}
+        </div>
         
-
         {/* Descripción del Repuesto */}
-        
+        {product.description && (
+          <div className="text-sm text-slate-400 leading-relaxed bg-[#0a0f1c] p-4 rounded-2xl border border-slate-800/50">
+            {product.description}
+          </div>
+        )}
 
         {/* Selector de Cantidad */}
         {!isOutOfStock && (
@@ -117,12 +116,12 @@ export default function ProductDetailModal({ product, isOpen, onClose, onDirectC
         )}
 
         {/* Resumen Total */}
-        <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+        <div className="flex items-center justify-between bg-slate-900/50 p-4 rounded-xl border border-slate-800">
           <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
             Total por {quantity} unidad(es):
           </span>
           <span className="text-2xl font-black text-cyan-400 font-mono">
-            ${calculatedTotal.toFixed(2)} USD
+            C${calculatedTotal.toFixed(2)}
           </span>
         </div>
 

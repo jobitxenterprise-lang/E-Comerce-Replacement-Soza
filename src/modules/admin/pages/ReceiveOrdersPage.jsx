@@ -276,7 +276,7 @@ export default function ReceiveOrdersPage() {
                           )}
                         </span>
                         <span className="font-mono text-slate-400">
-                          ${Number(it.subtotal || ((it.adjusted_quantity || it.quantity || 1) * (it.unit_price || 0))).toFixed(2)}
+                          C${Number(it.subtotal || ((it.adjusted_quantity || it.quantity || 1) * (it.unit_price || 0))).toFixed(2)}
                         </span>
                       </div>
                     ))}
@@ -290,7 +290,7 @@ export default function ReceiveOrdersPage() {
                       Total a Facturar
                     </span>
                     <span className="text-2xl font-black text-cyan-400 font-mono">
-                      ${Number(order.adjusted_total || 0).toFixed(2)}
+                      C${Number(order.adjusted_total || 0).toFixed(2)}
                     </span>
                   </div>
 

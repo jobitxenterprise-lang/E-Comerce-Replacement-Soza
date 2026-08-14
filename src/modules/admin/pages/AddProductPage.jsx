@@ -161,7 +161,7 @@ export default function AddProductPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <Input
-                  label="Precio de Venta ($ USD)"
+                  label="Precio de Venta (C$)"
                   name="price"
                   type="number"
                   step="0.01"
@@ -176,7 +176,7 @@ export default function AddProductPage() {
                 />
 
                 <Input
-                  label="Costo de Proveedor / Importación ($)"
+                  label="Costo de Proveedor / Importación (C$)"
                   name="cost_price"
                   type="number"
                   step="0.01"
@@ -312,10 +312,10 @@ export default function AddProductPage() {
                         {p.category}
                       </td>
                       <td className="p-4 text-right font-black text-cyan-400 font-mono">
-                        ${Number(p.price || 0).toFixed(2)}
+                        C${Number(p.price || 0).toFixed(2)}
                       </td>
                       <td className="p-4 text-right font-mono text-slate-400">
-                        ${Number(p.cost_price || 0).toFixed(2)}
+                        C${Number(p.cost_price || 0).toFixed(2)}
                       </td>
                       <td className="p-4 text-center">
                         <span

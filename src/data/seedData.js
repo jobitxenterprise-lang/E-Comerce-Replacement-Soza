@@ -9,7 +9,7 @@ export const initialCompanySettings = {
   email: 'ventas@repuestosoza.com',
   address: 'De la Gasolinera Puma 2c al Norte, Matagalpa, Nicaragua',
   city: 'Matagalpa, Nicaragua',
-  currency: '$',
+  currency: 'C$',
   logo_url: ''
 };
 

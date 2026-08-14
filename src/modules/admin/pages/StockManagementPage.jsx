@@ -148,7 +148,7 @@ export default function StockManagementPage() {
                           />
                           <div>
                             <span className="font-bold text-slate-100 block">{p.name}</span>
-                            <span className="text-[11px] text-cyan-400 font-mono font-bold">${Number(p.price || 0).toFixed(2)}</span>
+                            <span className="text-[11px] text-cyan-400 font-mono font-bold">C${Number(p.price || 0).toFixed(2)}</span>
                           </div>
                         </div>
                       </td>

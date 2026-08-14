@@ -111,7 +111,7 @@ export default function CartDrawer({ onProceedToCheckout }) {
                           </div>
 
                           <span className="text-sm font-mono font-black text-cyan-400">
-                            ${(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}
+                            C${(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -126,12 +126,12 @@ export default function CartDrawer({ onProceedToCheckout }) {
                   <div className="space-y-1 text-sm">
                     <div className="flex items-center justify-between text-slate-400 text-xs">
                       <span>Subtotal Repuestos</span>
-                      <span className="font-mono">${totalPrice.toFixed(2)}</span>
+                      <span className="font-mono">C${totalPrice.toFixed(2)}</span>
                     </div>
                     <div className="flex items-center justify-between text-base font-bold text-slate-100 pt-2 border-t border-slate-800">
                       <span>Total Estimado:</span>
                       <span className="text-cyan-400 text-xl font-black font-mono">
-                        ${totalPrice.toFixed(2)} USD
+                        C${totalPrice.toFixed(2)}
                       </span>
                     </div>
                   </div>

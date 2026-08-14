@@ -199,7 +199,7 @@ VALUES (
     "address": "De la Gasolinera Puma 2c al Norte, Matagalpa, Nicaragua",
     "city": "Matagalpa, Nicaragua",
     "whatsapp_company": "50583898687",
-    "currency": "$",
+    "currency": "C$",
     "logo_url": ""
   }'::jsonb
 ) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;

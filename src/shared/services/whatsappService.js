@@ -36,11 +36,11 @@ export function formatWhatsAppMessage({
     const name = item.product_name || item.name || 'Producto';
     const price = Number(item.unit_price || item.price || 0);
     const subtotal = qty * price;
-    msg += `${index + 1}. *${qty}x* ${name}\n   └ Unit: $${price.toFixed(2)} | Subtotal: $${subtotal.toFixed(2)}\n`;
+    msg += `${index + 1}. *${qty}x* ${name}\n   └ Unit: C$${price.toFixed(2)} | Subtotal: C$${subtotal.toFixed(2)}\n`;
   });
 
   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-  msg += `💰 *TOTAL A PAGAR: $${Number(total || 0).toFixed(2)}*\n`;
+  msg += `💰 *TOTAL A PAGAR: C$${Number(total || 0).toFixed(2)}*\n`;
   
   if (notes && notes.trim()) {
     msg += `📝 *Observaciones:* ${notes.trim()}\n`;

@@ -144,9 +144,9 @@ export function generateInvoicePDF({
     return [
       (index + 1).toString(),
       item.product_name || item.name || 'Repuesto de Motocicleta',
-      `$${price.toFixed(2)}`,
+      `C$${price.toFixed(2)}`,
       qty.toString(),
-      `$${subtotal.toFixed(2)}`
+      `C$${subtotal.toFixed(2)}`
     ];
   });
 
@@ -210,7 +210,7 @@ export function generateInvoicePDF({
   doc.setFontSize(9);
   doc.setTextColor(100, 116, 139);
   doc.text('SUBTOTAL:', 140, finalY + 4);
-  doc.text(`$${safeTotal.toFixed(2)}`, 196, finalY + 4, { align: 'right' });
+  doc.text(`C$${safeTotal.toFixed(2)}`, 196, finalY + 4, { align: 'right' });
 
   doc.text('DESCUENTO (0%):', 140, finalY + 9);
   doc.text('$0.00', 196, finalY + 9, { align: 'right' });
@@ -223,7 +223,7 @@ export function generateInvoicePDF({
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
   doc.setTextColor(15, 23, 42);
-  doc.text(`$${safeTotal.toFixed(2)} USD`, 196, finalY + 23, { align: 'right' });
+  doc.text(`C$${safeTotal.toFixed(2)}`, 196, finalY + 23, { align: 'right' });
 
   // =========================================================================
   // 5. PIE DE PÁGINA

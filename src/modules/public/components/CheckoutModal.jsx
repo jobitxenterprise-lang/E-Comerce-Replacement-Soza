@@ -115,7 +115,7 @@ export default function CheckoutModal({ isOpen, onClose, defaultSellerId = '', i
             </div>
             <div className="flex justify-between py-1 pt-2 text-base font-bold">
               <span className="text-slate-300">Total a Liquidar:</span>
-              <span className="text-cyan-400 font-black font-mono text-lg">${Number(orderCompleted.total || 0).toFixed(2)} USD</span>
+              <span className="text-cyan-400 font-black font-mono text-lg">C${Number(orderCompleted.total || 0).toFixed(2)}</span>
             </div>
           </div>
 
@@ -145,7 +145,7 @@ export default function CheckoutModal({ isOpen, onClose, defaultSellerId = '', i
                     RESUMEN ({cartItems.length} {cartItems.length === 1 ? 'REPUESTO' : 'REPUESTOS'})
                   </span>
                   <span className="font-mono font-black text-cyan-400 text-sm sm:text-base">
-                    Total: ${totalPrice.toFixed(2)}
+                    Total: C${totalPrice.toFixed(2)}
                   </span>
                 </div>
                 <div className="max-h-28 overflow-y-auto space-y-1.5 pr-1 text-xs">
@@ -155,7 +155,7 @@ export default function CheckoutModal({ isOpen, onClose, defaultSellerId = '', i
                         <strong className="text-cyan-400 font-mono">{item.quantity}x</strong> {item.name}
                       </span>
                       <span className="font-mono text-slate-400">
-                        ${(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}
+                        C${(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}
                       </span>
                     </div>
                   ))}
@@ -208,7 +208,7 @@ export default function CheckoutModal({ isOpen, onClose, defaultSellerId = '', i
                   icon={Send}
                   className="w-full sm:w-auto uppercase tracking-wider font-bold"
                 >
-                  ENVIAR PEDIDO (${totalPrice.toFixed(2)})
+                  ENVIAR PEDIDO (C${totalPrice.toFixed(2)})
                 </Button>
               </div>
             </Form>

@@ -155,7 +155,7 @@ export default function QueryOrdersPage() {
                   <th className="p-4">Asesor</th>
                   <th className="p-4">Repuestos / Cantidades</th>
                   <th className="p-4">Estado</th>
-                  <th className="p-4 text-right">Total ($)</th>
+                  <th className="p-4 text-right">Total (C$)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
@@ -204,7 +204,7 @@ export default function QueryOrdersPage() {
                         </Badge>
                       </td>
                       <td className="p-4 text-right font-mono font-black text-cyan-400 text-sm">
-                        ${Number(order.total || order.adjusted_total || 0).toFixed(2)}
+                        C${Number(order.total || order.adjusted_total || 0).toFixed(2)}
                       </td>
                     </tr>
                   );
