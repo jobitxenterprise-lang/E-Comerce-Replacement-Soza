@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import Button from '../../../shared/components/Button';
-import { getInvoices, getProducts } from '../../../shared/services/dataService';
+import { getInvoices, getProducts, getSellers } from '../../../shared/services/dataService';
 import { exportOrdersToExcel } from '../../../shared/services/excelService';
 import { useToast } from '../../../shared/context/ToastContext';
 import { BarChart3, Download, DollarSign, Package, TrendingUp, Calendar, Disc3, ShieldCheck } from 'lucide-react';
@@ -10,6 +10,7 @@ export default function ReportsPage() {
   const { success, error } = useToast();
   const [invoices, setInvoices] = useState([]);
   const [products, setProducts] = useState([]);
+  const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
@@ -23,12 +24,14 @@ export default function ReportsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [invs, prods] = await Promise.all([
+      const [invs, prods, sellersData] = await Promise.all([
         getInvoices(),
-        getProducts()
+        getProducts(),
+        getSellers()
       ]);
       setInvoices(invs || []);
       setProducts(prods || []);
+      setSellers(sellersData || []);
     } catch (e) {
       error('Error al cargar datos de reportes: ' + e.message);
     } finally {
@@ -181,25 +184,40 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
-                  {filteredInvoices.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="p-4 font-mono font-bold text-cyan-400">
-                        {inv.invoice_number}
-                      </td>
-                      <td className="p-4 whitespace-nowrap">
-                        {new Date(inv.invoice_date || inv.created_at).toLocaleDateString('es-ES')}
-                      </td>
-                      <td className="p-4 font-bold text-slate-100">
-                        {inv.client_name}
-                      </td>
-                      <td className="p-4 text-cyan-300 font-bold">
-                        {inv.seller_name || 'Venta Directa'}
-                      </td>
-                      <td className="p-4 text-right font-black text-cyan-400 font-mono text-sm">
-                        C${Number(inv.total_amount || 0).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
+                  {filteredInvoices.map((inv) => {
+                    const seller = sellers.find(s => 
+                      s.name?.toLowerCase().trim() === inv.seller_name?.toLowerCase().trim() ||
+                      s.id === inv.seller_id
+                    );
+                    return (
+                      <tr key={inv.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="p-4 font-mono font-bold text-cyan-400">
+                          {inv.invoice_number}
+                        </td>
+                        <td className="p-4 whitespace-nowrap">
+                          {new Date(inv.invoice_date || inv.created_at).toLocaleDateString('es-ES')}
+                        </td>
+                        <td className="p-4 font-bold text-slate-100">
+                          {inv.client_name}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1.5">
+                            <span className="text-cyan-300 font-bold whitespace-nowrap">
+                              {inv.seller_name || 'Venta Directa'}
+                            </span>
+                            {seller?.zone && (
+                              <span className="text-[10px] text-slate-400 font-normal bg-slate-800 px-2 py-0.5 rounded border border-slate-700/60 whitespace-nowrap">
+                                {seller.zone}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4 text-right font-black text-cyan-400 font-mono text-sm">
+                          C${Number(inv.total_amount || 0).toFixed(2)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

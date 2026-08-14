@@ -1,22 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../../../shared/components/Modal';
 import Button from '../../../shared/components/Button';
 import { downloadInvoicePDF } from '../../../shared/services/pdfService';
+import { getSellers } from '../../../shared/services/dataService';
 import { Download } from 'lucide-react';
 import { useToast } from '../../../shared/context/ToastContext';
 import logoMotoImg from '../../public/Imagenes/logomoto.png';
 
 export default function InvoiceModal({ isOpen, onClose, invoice }) {
   const { success } = useToast();
+  const [sellers, setSellers] = useState([]);
+
+  useEffect(() => {
+    getSellers().then(data => setSellers(data || [])).catch(() => {});
+  }, []);
 
   if (!invoice) return null;
+
+  const seller = sellers.find(s => 
+    s.name?.toLowerCase().trim() === invoice.seller_name?.toLowerCase().trim() ||
+    s.id === invoice.seller_id
+  );
 
   const handleDownload = () => {
     downloadInvoicePDF({
       invoiceNumber: invoice.invoice_number,
       orderNumber: invoice.order_number,
       clientName: invoice.client_name,
-      sellerName: invoice.seller_name,
+      sellerName: seller?.zone ? `${invoice.seller_name || 'Venta Mostrador'} (${seller.zone})` : (invoice.seller_name || 'Venta Mostrador'),
       date: invoice.invoice_date || invoice.created_at,
       items: invoice.items_snapshot || [],
       total: invoice.total_amount,
@@ -90,7 +101,7 @@ export default function InvoiceModal({ isOpen, onClose, invoice }) {
                 </span>
                 <p className="font-bold text-slate-900 text-sm">{invoice.client_name}</p>
                 <p className="text-slate-600 text-[11px]">
-                  Vendedor: {invoice.seller_name || 'Venta Mostrador'}  |  Ref. Pedido: {invoice.order_number || 'S/N'}
+                  Vendedor: {invoice.seller_name || 'Venta Mostrador'} {seller?.zone ? `(${seller.zone})` : ''}  |  Ref. Pedido: {invoice.order_number || 'S/N'}
                 </p>
               </div>
             </div>
