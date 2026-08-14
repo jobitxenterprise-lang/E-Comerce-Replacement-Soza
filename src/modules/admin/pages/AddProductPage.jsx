@@ -5,10 +5,10 @@ import Input from '../../../shared/components/Input';
 import Select from '../../../shared/components/Select';
 import Button from '../../../shared/components/Button';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
-import { getProducts, addProduct, updateProduct, getCategories } from '../../../shared/services/dataService';
+import { getProducts, addProduct, updateProduct, getCategories, uploadProductImage } from '../../../shared/services/dataService';
 import { productCategories as defaultCategories } from '../../../data/seedData';
 import { useToast } from '../../../shared/context/ToastContext';
-import { PlusCircle, Edit, Zap, Image, Package, DollarSign, Wrench, X } from 'lucide-react';
+import { PlusCircle, Edit, Zap, Image as ImageIcon, Package, DollarSign, Wrench, X, Upload } from 'lucide-react';
 
 export default function AddProductPage() {
   const { success, error } = useToast();
@@ -16,6 +16,7 @@ export default function AddProductPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -93,6 +94,22 @@ export default function AddProductPage() {
     }
   };
 
+  const handleImageUpload = async (e, setFieldValue) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const url = await uploadProductImage(file);
+      setFieldValue('image_url', url);
+      success('Imagen subida exitosamente a Supabase.');
+    } catch (err) {
+      error(err.message);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const categoryOptions = categories
     .filter(c => c !== 'Todos')
     .map(c => ({ value: c, label: c }));
@@ -131,7 +148,7 @@ export default function AddProductPage() {
           validationSchema={productValidationSchema}
           onSubmit={handleFormSubmit}
         >
-          {({ values, errors, touched, handleChange, handleBlur, isSubmitting }) => (
+          {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }) => (
             <Form className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <Input
@@ -166,7 +183,7 @@ export default function AddProductPage() {
                   type="number"
                   step="0.01"
                   placeholder="45.00"
-                  icon={DollarSign}
+                  icon={null}
                   required
                   value={values.price}
                   onChange={handleChange}
@@ -181,7 +198,7 @@ export default function AddProductPage() {
                   type="number"
                   step="0.01"
                   placeholder="28.00"
-                  icon={DollarSign}
+                 icon={null}
                   required
                   value={values.cost_price}
                   onChange={handleChange}
@@ -207,18 +224,46 @@ export default function AddProductPage() {
                 />
               </div>
 
-              <Input
-                label="URL de la Foto del Repuesto (Opcional)"
-                name="image_url"
-                placeholder="https://..."
-                icon={Image}
-                value={values.image_url}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={errors.image_url}
-                touched={touched.image_url}
-                helperText="Enlace directo a la imagen del repuesto en formato JPG o PNG"
-              />
+              <div className="flex flex-col gap-1.5 font-sport">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                  Foto del Repuesto (Opcional)
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <Input
+                      name="image_url"
+                      placeholder="URL de la imagen..."
+                      icon={ImageIcon}
+                      value={values.image_url}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      error={errors.image_url}
+                      touched={touched.image_url}
+                    />
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/png, image/jpeg, image/webp"
+                      onChange={(e) => handleImageUpload(e, setFieldValue)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={uploadingImage}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploadingImage}
+                      icon={Upload}
+                      className="whitespace-nowrap"
+                    >
+                      {uploadingImage ? 'Subiendo...' : 'Subir Imagen'}
+                    </Button>
+                  </div>
+                </div>
+                <span className="text-xs text-slate-500">
+                  Puedes pegar un enlace directo o subir una imagen. (Requiere bucket "product-images" público en Supabase).
+                </span>
+              </div>
 
               {/* Textarea Descripción */}
               <div className="flex flex-col gap-1.5 font-sport">

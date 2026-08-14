@@ -122,6 +122,31 @@ export async function addCategory(categoryData) {
 }
 
 // ==========================================
+// 1.5. STORAGE (IMÁGENES)
+// ==========================================
+export async function uploadProductImage(file) {
+  if (!isSupabaseConfigured) throw new Error("Supabase no está configurado.");
+  
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('product-images')
+    .upload(filePath, file);
+
+  if (uploadError) {
+    throw new Error(`Error al subir imagen: ${uploadError.message}. Asegúrate de crear el bucket "product-images" público.`);
+  }
+
+  const { data } = supabase.storage
+    .from('product-images')
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
+}
+
+// ==========================================
 // 2. PRODUCTOS
 // ==========================================
 export async function getProducts() {
