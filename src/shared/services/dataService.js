@@ -566,16 +566,20 @@ export async function updateOrderItems(orderId, updatedItems) {
   
   // Local storage logic
   const orderItems = getLocal(LOCAL_STORAGE_KEYS.ORDER_ITEMS);
-  const updatedLocalItems = [...orderItems];
+  const modifiedProductIds = updatedItems.map(ui => ui.product_id);
   
+  let updatedLocalItems = orderItems.filter(item => item.order_id !== orderId);
+  const removedItems = orderItems.filter(
+    item => item.order_id === orderId && !modifiedProductIds.includes(item.product_id)
+  );
+
   for (const ui of updatedItems) {
-    const existingIndex = updatedLocalItems.findIndex(item => item.order_id === orderId && (item.id === ui.id || item.product_id === ui.product_id));
+    const existing = orderItems.find(item => item.order_id === orderId && (item.id === ui.id || item.product_id === ui.product_id));
     const qty = Math.max(0, parseInt(ui.adjusted_quantity || ui.quantity, 10) || 0);
     const subtotal = qty * Number(ui.unit_price || 0);
     
-    if (existingIndex >= 0) {
-      updatedLocalItems[existingIndex] = { ...updatedLocalItems[existingIndex], quantity: qty, subtotal };
-      newTotal += subtotal;
+    if (existing) {
+      updatedLocalItems.push({ ...existing, quantity: qty, subtotal });
     } else {
       updatedLocalItems.push({
         id: 'item-' + crypto.randomUUID(),
@@ -587,18 +591,10 @@ export async function updateOrderItems(orderId, updatedItems) {
         subtotal: subtotal,
         created_at: new Date().toISOString()
       });
-      newTotal += subtotal;
     }
+    newTotal += subtotal;
   }
   
-  // Agregar al total los subtotales de los items originales que no se modificaron (por si acaso)
-  const modifiedProductIds = updatedItems.map(ui => ui.product_id);
-  orderItems.forEach(item => {
-    if (item.order_id === orderId && !modifiedProductIds.includes(item.product_id)) {
-      newTotal += Number(item.subtotal || 0);
-    }
-  });
-
   setLocal(LOCAL_STORAGE_KEYS.ORDER_ITEMS, updatedLocalItems);
 
   const orders = getLocal(LOCAL_STORAGE_KEYS.ORDERS);
@@ -609,10 +605,20 @@ export async function updateOrderItems(orderId, updatedItems) {
   if (isSupabaseConfigured) {
     try {
       await supabase.from('orders').update({ total: newTotal }).eq('id', orderId);
+      
+      for (const removed of removedItems) {
+        if (removed.id && !removed.id.toString().startsWith('item-')) {
+          await supabase.from('order_items').delete().eq('id', removed.id);
+        } else {
+          await supabase.from('order_items').delete().eq('order_id', orderId).eq('product_id', removed.product_id);
+        }
+      }
+
       for (const it of updatedItems) {
         const qty = Math.max(0, parseInt(it.adjusted_quantity || it.quantity, 10) || 0);
-        if (it.id && it.id.toString().startsWith('new-')) {
-          await supabase.from('order_items').insert([{
+        if (it.id && (it.id.toString().startsWith('new-') || it.id.toString().startsWith('item-'))) {
+          const { error: insertError } = await supabase.from('order_items').insert([{
+            id: it.id.toString().startsWith('new-') ? 'item-' + crypto.randomUUID() : it.id,
             order_id: orderId,
             product_id: it.product_id,
             product_name: it.product_name || it.name,
@@ -620,11 +626,13 @@ export async function updateOrderItems(orderId, updatedItems) {
             unit_price: Number(it.unit_price || 0),
             subtotal: qty * Number(it.unit_price || 0)
           }]);
+          if (insertError) console.error("Supabase insert error in order_items:", insertError);
         } else {
-          await supabase.from('order_items').update({
+          const { error: updateError } = await supabase.from('order_items').update({
             quantity: qty,
             subtotal: qty * Number(it.unit_price || 0)
           }).eq('order_id', orderId).eq('product_id', it.product_id);
+          if (updateError) console.error("Supabase update error in order_items:", updateError);
         }
       }
       
