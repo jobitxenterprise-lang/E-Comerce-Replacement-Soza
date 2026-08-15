@@ -47,15 +47,18 @@ export default function EditOrderItemsModal({
   };
 
   useEffect(() => {
-    if (adminOrder && adminOrder.items) {
+    if (isOpen && adminOrder && adminOrder.items) {
       setItems(
         adminOrder.items.map(item => ({
           ...item,
-          adjusted_quantity: item.adjusted_quantity !== undefined ? item.adjusted_quantity : item.quantity
+          original_quantity: item.original_quantity !== undefined ? item.original_quantity : (item.quantity || 0),
+          adjusted_quantity: item.adjusted_quantity !== undefined ? item.adjusted_quantity : (item.quantity || 0),
+          quantity: item.quantity !== undefined ? item.quantity : (item.adjusted_quantity || 0),
+          unit_price: Number(item.unit_price || item.price || 0)
         }))
       );
     }
-  }, [adminOrder]);
+  }, [adminOrder?.id, isOpen]);
 
   if (!adminOrder) return null;
 

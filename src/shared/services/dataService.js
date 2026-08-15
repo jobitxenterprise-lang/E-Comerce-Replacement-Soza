@@ -614,11 +614,12 @@ export async function updateOrderItems(orderId, updatedItems) {
         }
       }
 
+      // Supabase logic
       for (const it of updatedItems) {
         const qty = Math.max(0, parseInt(it.adjusted_quantity || it.quantity, 10) || 0);
-        if (it.id && (it.id.toString().startsWith('new-') || it.id.toString().startsWith('item-'))) {
+        if (it.id && it.id.toString().startsWith('new-')) {
           const { error: insertError } = await supabase.from('order_items').insert([{
-            id: it.id.toString().startsWith('new-') ? 'item-' + crypto.randomUUID() : it.id,
+            id: 'item-' + crypto.randomUUID(),
             order_id: orderId,
             product_id: it.product_id,
             product_name: it.product_name || it.name,
@@ -714,7 +715,7 @@ export async function updateAdminOrderItems(adminOrderId, updatedItems) {
   // 3. Reconstruir los items de este pedido basado en updatedItems
   for (const ui of updatedItems) {
     const existing = adminOrderItems.find(item => item.admin_order_id === adminOrderId && (item.id === ui.id || item.product_id === ui.product_id));
-    const qty = Math.max(0, parseInt(ui.adjusted_quantity, 10) || 0);
+    const qty = Math.max(0, parseInt(ui.adjusted_quantity || ui.quantity, 10) || 0);
     const subtotal = qty * Number(ui.unit_price || 0);
     
     if (existing) {
@@ -760,11 +761,9 @@ export async function updateAdminOrderItems(adminOrderId, updatedItems) {
 
       // Procesar eliminaciones
       for (const removed of removedItems) {
-        // En Supabase, el ID es el único identificador seguro
         if (removed.id && !removed.id.toString().startsWith('admin-item-')) {
           await supabase.from('admin_order_items').delete().eq('id', removed.id);
         } else {
-          // Fallback por si acaso fue creado antes de sincronizar
           await supabase.from('admin_order_items')
             .delete()
             .eq('admin_order_id', adminOrderId)
@@ -774,10 +773,10 @@ export async function updateAdminOrderItems(adminOrderId, updatedItems) {
 
       // Procesar inserciones/actualizaciones
       for (const it of updatedItems) {
-        const qty = Math.max(0, parseInt(it.adjusted_quantity, 10) || 0);
-        if (it.id && (it.id.toString().startsWith('new-') || it.id.toString().startsWith('admin-item-'))) {
+        const qty = Math.max(0, parseInt(it.adjusted_quantity || it.quantity, 10) || 0);
+        if (it.id && it.id.toString().startsWith('new-')) {
           const { error: insertError } = await supabase.from('admin_order_items').insert([{
-            id: it.id.toString().startsWith('new-') ? 'admin-item-' + crypto.randomUUID() : it.id,
+            id: 'admin-item-' + crypto.randomUUID(),
             admin_order_id: adminOrderId,
             product_id: it.product_id,
             product_name: it.product_name || it.name,
