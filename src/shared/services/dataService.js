@@ -768,7 +768,8 @@ export async function updateAdminOrderItems(adminOrderId, updatedItems) {
       for (const it of updatedItems) {
         const qty = Math.max(0, parseInt(it.adjusted_quantity, 10) || 0);
         if (it.id && (it.id.toString().startsWith('new-') || it.id.toString().startsWith('admin-item-'))) {
-          await supabase.from('admin_order_items').insert([{
+          const { error: insertError } = await supabase.from('admin_order_items').insert([{
+            id: it.id.toString().startsWith('new-') ? 'admin-item-' + crypto.randomUUID() : it.id,
             admin_order_id: adminOrderId,
             product_id: it.product_id,
             product_name: it.product_name || it.name,
@@ -777,13 +778,15 @@ export async function updateAdminOrderItems(adminOrderId, updatedItems) {
             unit_price: Number(it.unit_price || 0),
             subtotal: qty * Number(it.unit_price || 0)
           }]);
+          if (insertError) console.error("Supabase insert error in admin_order_items:", insertError);
         } else {
-          await supabase.from('admin_order_items').update({
+          const { error: updateError } = await supabase.from('admin_order_items').update({
             adjusted_quantity: qty,
             subtotal: qty * Number(it.unit_price || 0)
           })
           .eq('admin_order_id', adminOrderId)
           .eq('product_id', it.product_id);
+          if (updateError) console.error("Supabase update error in admin_order_items:", updateError);
         }
       }
     } catch (e) {
