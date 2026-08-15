@@ -71,24 +71,29 @@ export default function EditOrderItemsModal({
   };
 
   const handleAddProduct = (product) => {
-    const exists = items.find(it => it.product_id === product.id);
-    if (exists) {
-      handleQtyChange(exists.id || exists.product_id, (exists.adjusted_quantity || 0) + 1);
-    } else {
-      setItems(prev => [
-        ...prev,
-        {
-          id: 'new-' + Date.now(),
-          product_id: product.id,
-          product_name: product.name,
-          original_quantity: 0,
-          adjusted_quantity: 1,
-          quantity: 1,
-          unit_price: product.price,
-          subtotal: product.price
-        }
-      ]);
-    }
+    setItems(prev => {
+      const existsIndex = prev.findIndex(it => it.product_id === product.id);
+      if (existsIndex >= 0) {
+        const newItems = [...prev];
+        const existing = newItems[existsIndex];
+        newItems[existsIndex] = { ...existing, adjusted_quantity: (existing.adjusted_quantity || 0) + 1 };
+        return newItems;
+      } else {
+        return [
+          ...prev,
+          {
+            id: 'new-' + crypto.randomUUID(),
+            product_id: product.id,
+            product_name: product.name,
+            original_quantity: 0,
+            adjusted_quantity: 1,
+            quantity: 1,
+            unit_price: product.price,
+            subtotal: product.price
+          }
+        ];
+      }
+    });
     success(`${product.name} agregado`);
   };
 
