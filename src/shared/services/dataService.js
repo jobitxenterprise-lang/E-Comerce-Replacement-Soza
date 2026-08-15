@@ -367,7 +367,7 @@ export async function authenticateAdmin(usernameOrEmail, password) {
 // 5. PEDIDOS (Tabla "Pedido" - Vendedor / Público)
 // ==========================================
 export async function createOrder({ client_name, seller_id, origin = 'publico', items = [], notes = '' }) {
-  const orderNumber = 'SZ-MOTO-' + Math.floor(100000 + Math.random() * 900000);
+  const orderNumber = 'SZ-' + Math.floor(100000 + Math.random() * 900000);
   const orderId = 'ord-' + crypto.randomUUID();
   const calculatedTotal = items.reduce((acc, item) => acc + (Number(item.price || item.unit_price || 0) * Number(item.quantity || 1)), 0);
 
@@ -693,16 +693,24 @@ export async function getAdminOrders() {
 export async function updateAdminOrderItems(adminOrderId, updatedItems) {
   let newTotal = 0;
   const adminOrderItems = getLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDER_ITEMS);
-  const updatedAdminItems = [...adminOrderItems];
+  const modifiedProductIds = updatedItems.map(ui => ui.product_id);
+  
+  // 1. Conservar items de otros pedidos
+  let updatedAdminItems = adminOrderItems.filter(item => item.admin_order_id !== adminOrderId);
+  
+  // 2. Identificar items eliminados para borrarlos de Supabase
+  const removedItems = adminOrderItems.filter(
+    item => item.admin_order_id === adminOrderId && !modifiedProductIds.includes(item.product_id)
+  );
 
+  // 3. Reconstruir los items de este pedido basado en updatedItems
   for (const ui of updatedItems) {
-    const existingIndex = updatedAdminItems.findIndex(item => item.admin_order_id === adminOrderId && (item.id === ui.id || item.product_id === ui.product_id));
+    const existing = adminOrderItems.find(item => item.admin_order_id === adminOrderId && (item.id === ui.id || item.product_id === ui.product_id));
     const qty = Math.max(0, parseInt(ui.adjusted_quantity, 10) || 0);
     const subtotal = qty * Number(ui.unit_price || 0);
     
-    if (existingIndex >= 0) {
-      updatedAdminItems[existingIndex] = { ...updatedAdminItems[existingIndex], adjusted_quantity: qty, subtotal };
-      newTotal += subtotal;
+    if (existing) {
+      updatedAdminItems.push({ ...existing, adjusted_quantity: qty, subtotal });
     } else {
       updatedAdminItems.push({
         id: 'admin-item-' + crypto.randomUUID(),
@@ -715,16 +723,9 @@ export async function updateAdminOrderItems(adminOrderId, updatedItems) {
         subtotal: subtotal,
         created_at: new Date().toISOString()
       });
-      newTotal += subtotal;
     }
+    newTotal += subtotal;
   }
-
-  const modifiedProductIds = updatedItems.map(ui => ui.product_id);
-  adminOrderItems.forEach(item => {
-    if (item.admin_order_id === adminOrderId && !modifiedProductIds.includes(item.product_id)) {
-      newTotal += Number(item.subtotal || 0);
-    }
-  });
 
   setLocal(LOCAL_STORAGE_KEYS.ADMIN_ORDER_ITEMS, updatedAdminItems);
 
@@ -749,9 +750,24 @@ export async function updateAdminOrderItems(adminOrderId, updatedItems) {
         .update({ adjusted_total: newTotal, edited_by_admin: true })
         .eq('id', adminOrderId);
 
+      // Procesar eliminaciones
+      for (const removed of removedItems) {
+        // En Supabase, el ID es el único identificador seguro
+        if (removed.id && !removed.id.toString().startsWith('admin-item-')) {
+          await supabase.from('admin_order_items').delete().eq('id', removed.id);
+        } else {
+          // Fallback por si acaso fue creado antes de sincronizar
+          await supabase.from('admin_order_items')
+            .delete()
+            .eq('admin_order_id', adminOrderId)
+            .eq('product_id', removed.product_id);
+        }
+      }
+
+      // Procesar inserciones/actualizaciones
       for (const it of updatedItems) {
         const qty = Math.max(0, parseInt(it.adjusted_quantity, 10) || 0);
-        if (it.id && it.id.toString().startsWith('new-')) {
+        if (it.id && (it.id.toString().startsWith('new-') || it.id.toString().startsWith('admin-item-'))) {
           await supabase.from('admin_order_items').insert([{
             admin_order_id: adminOrderId,
             product_id: it.product_id,
@@ -815,7 +831,7 @@ export async function updateAdminOrderStatus(adminOrderId, newStatus) {
 
     // 2. Generar Factura
     const invoices = getLocal(LOCAL_STORAGE_KEYS.INVOICES);
-    const invoiceNumber = `FAC-SOZA-${new Date().getFullYear()}-${String(invoices.length + 1).padStart(4, '0')}`;
+    const invoiceNumber = `FAC-${String(invoices.length + 1).padStart(6, '0')}`;
     
     generatedInvoice = {
       id: 'inv-' + crypto.randomUUID(),
@@ -890,7 +906,7 @@ export async function getInvoices() {
 
         const fallbackInvoice = {
           id: 'inv-sync-' + order.id,
-          invoice_number: `FAC-SOZA-${order.order_number.replace('SZ-', '')}`,
+          invoice_number: `FAC-${String(order.order_number.replace(/SZ-MOTO-|SZ-/g, '').split('-')[0]).padStart(6, '0')}`,
           admin_order_id: order.id,
           order_number: order.order_number,
           client_name: order.client_name,
